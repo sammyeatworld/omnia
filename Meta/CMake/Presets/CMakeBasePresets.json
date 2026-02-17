@@ -1,0 +1,15 @@
+{
+    "version": 10,
+    "configurePresets": [
+        {
+            "hidden": true,
+            "name": "base",
+            "displayName": "Default Config",
+            "generator": "Ninja",
+            "binaryDir": "${sourceDir}/Build/${presetName}",
+            "cacheVariables": {
+                "CMAKE_EXPORT_COMPILE_COMMANDS": "ON"
+            }
+        }
+    ]
+}

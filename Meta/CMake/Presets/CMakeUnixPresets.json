@@ -1,0 +1,17 @@
+{
+    "version": 10,
+    "include": [
+        "CMakeBasePresets.json"
+    ],
+    "configurePresets": [
+        {
+            "name": "unix",
+            "hidden": true,
+            "inherits": "base",
+            "cacheVariables": {
+                "CMAKE_C_COMPILER": "clang",
+                "CMAKE_CXX_COMPILER": "clang++"
+            }
+        }
+    ]
+}

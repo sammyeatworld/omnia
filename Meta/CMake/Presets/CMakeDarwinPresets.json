@@ -1,0 +1,49 @@
+{
+    "version": 10,
+    "include": [
+        "CMakeUnixPresets.json"
+    ],
+    "configurePresets": [
+        {
+            "name": "darwin",
+            "hidden": true,
+            "inherits": "unix"
+        },
+        {
+            "name": "Debug",
+            "displayName": "Debug (macOS)",
+            "inherits": "darwin",
+            "cacheVariables": {
+                "CMAKE_BUILD_TYPE": "Debug"
+            }
+        },
+        {
+            "name": "Release",
+            "displayName": "Release (macOS, RelWithDebInfo)",
+            "inherits": "darwin",
+            "cacheVariables": {
+                "CMAKE_BUILD_TYPE": "RelWithDebInfo"
+            }
+        },
+        {
+            "name": "Distribution",
+            "displayName": "Distribution (macOS, Release)",
+            "inherits": "darwin",
+            "cacheVariables": {
+                "CMAKE_BUILD_TYPE": "Release"
+            }
+        },
+        {
+            "name": "Sanitizers",
+            "displayName": "Sanitizers (macOS, ASAN+UBSAN)",
+            "inherits": "darwin",
+            "cacheVariables": {
+                "CMAKE_BUILD_TYPE": "RelWithDebInfo",
+                "CMAKE_C_FLAGS": "-fno-omit-frame-pointer -fsanitize=address,undefined",
+                "CMAKE_CXX_FLAGS": "-fno-omit-frame-pointer -fsanitize=address,undefined",
+                "CMAKE_EXE_LINKER_FLAGS": "-fsanitize=address,undefined",
+                "CMAKE_SHARED_LINKER_FLAGS": "-fsanitize=address,undefined"
+            }
+        }
+    ]
+}
