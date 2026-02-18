@@ -1,0 +1,8 @@
+add_subdirectory(LibAudio)
+add_subdirectory(LibCore)
+add_subdirectory(LibEngine)
+add_subdirectory(LibGraphics)
+add_subdirectory(LibMath)
+add_subdirectory(LibPhysics)
+add_subdirectory(LibRenderer)
+add_subdirectory(LibUI)
