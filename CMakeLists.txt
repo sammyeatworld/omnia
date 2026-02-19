@@ -1,6 +1,22 @@
 cmake_minimum_required(VERSION 4.1)
-project(omnia)
 
-set(CMAKE_CXX_STANDARD 23)
+project(omnia
+        VERSION 0.1.0
+        LANGUAGES C CXX
+        DESCRIPTION "Omnia Game Engine"
+)
 
-add_executable(omnia main.cpp)
+if (APPLE)
+    set(CMAKE_OSX_DEPLOYMENT_TARGET "15.0")
+endif()
+
+set(OMNIA_SOURCE_DIR "${CMAKE_CURRENT_SOURCE_DIR}")
+list(APPEND CMAKE_MODULE_PATH "${OMNIA_SOURCE_DIR}/Meta/CMake")
+
+include(Compile)
+include(Options)
+include(Targets)
+
+add_subdirectory(Common)
+add_subdirectory(Libraries)
+add_subdirectory(Tools)
