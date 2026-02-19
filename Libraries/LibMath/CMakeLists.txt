@@ -1,1 +1,7 @@
-add_library(LibMath)
+set(SOURCES
+        main.cpp
+)
+
+omnia_lib(LibMath
+        SOURCES ${SOURCES}
+)
