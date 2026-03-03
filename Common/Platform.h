@@ -49,6 +49,10 @@
 #    define OA_LIBC_GLIBC_PREREQ(maj, min) 0
 #endif
 
+#if defined(_WIN32) || defined(WIN32)
+#    define OA_OS_WINDOWS
+#endif
+
 #if defined(__linux__)
 #    define OA_OS_LINUX
 #endif
