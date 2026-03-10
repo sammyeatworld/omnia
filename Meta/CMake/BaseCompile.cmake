@@ -18,3 +18,7 @@ if (OMNIA_ENABLE_SANITIZERS AND NOT MSVC)
     add_compile_options(-fno-omit-frame-pointer -fsanitize=address,undefined)
     add_link_options(-fsanitize=address,undefined)
 endif()
+
+if (WIN32)
+    add_compile_definitions(-DWIN32_LEAN_AND_MEAN -DNOMINMAX)
+endif()
