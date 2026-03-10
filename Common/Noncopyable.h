@@ -16,6 +16,10 @@ private:                      \
 c(c&&) = delete;              \
 c& operator=(c&&) = delete
 
+#define OA_MAKE_NONCONSTRUCTIBLE(c) \
+private:                            \
+c() = delete
+
 #define OA_MAKE_DEFAULT_MOVABLE(c) \
 public:                            \
 c(c&&) = default;                  \
@@ -25,3 +29,7 @@ c& operator=(c&&) = default
 public:                             \
 c(c const&) = default;              \
 c& operator=(c const&) = default
+
+#define OA_MAKE_DEFAULT_CONSTRUCTIBLE(c) \
+public:                                  \
+c() = default
