@@ -25,6 +25,7 @@ function(omnia_lib target)
 
     target_include_directories(${target} PUBLIC
             $<BUILD_INTERFACE:${CMAKE_CURRENT_BINARY_DIR}/include>
+            PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}
     )
 endfunction()
 
@@ -35,6 +36,7 @@ function(omnia_app target)
 
     target_sources(${target} PRIVATE ${OMNIA_SOURCES})
     target_link_libraries(${target} PRIVATE Common ${OMNIA_LIBS})
+    target_include_directories(${target} PRIVATE ${CMAKE_CURRENT_SOURCE_DIR})
     if (OMNIA_LIBS)
         add_dependencies(${target} ${OMNIA_LIBS})
     endif ()
