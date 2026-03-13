@@ -29,7 +29,6 @@ public:
         i32 height;
     };
 
-    Window() = default;
     virtual ~Window() = default;
 
     virtual void poll_events() = 0;
@@ -40,6 +39,8 @@ public:
     virtual auto height() const -> i32 = 0;
 
     static auto CORE_API create(Configuration const& config) -> std::expected<std::unique_ptr<Window>, std::string>;
+protected:
+    Window() = default;
 };
 
 }
