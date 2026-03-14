@@ -5,6 +5,7 @@
  */
 
 #include "WindowWin32.h"
+#include "Platform/Event.h"
 
 #include <vector>
 #include <windows.h>
@@ -101,10 +102,23 @@ auto WindowWin32::handle_message(u32 message, u64 first_param, i64 second_param)
     switch (message) {
     case WM_CLOSE:
         m_is_running = false;
+
+        EventDispatcher::dispatch(WindowCloseEvent {});
         return true;
     case WM_DESTROY:
         PostQuitMessage(0);
         return true;
+    case WM_SIZE: {
+        m_config.width = LOWORD(second_param);
+        m_config.height = HIWORD(second_param);
+
+        WindowResizeEvent event {
+            .width = m_config.width,
+            .height = m_config.height
+        };
+        EventDispatcher::dispatch(event);
+        return true;
+    }
     case WM_KEYDOWN:
     case WM_SYSKEYDOWN:
     case WM_KEYUP:
@@ -158,8 +172,8 @@ auto WindowWin32::handle_message(u32 message, u64 first_param, i64 second_param)
             if (GetRawInputData(reinterpret_cast<HRAWINPUT>(second_param), RID_INPUT, raw_buffer.data(), &data_size, sizeof(RAWINPUTHEADER)) == data_size) {
                 auto* raw_input = reinterpret_cast<RAWINPUT*>(raw_buffer.data());
                 if (raw_input->header.dwType == RIM_TYPEMOUSE) {
-                    auto const delta_x = raw_input->data.mouse.lLastX;
-                    auto const delta_y = raw_input->data.mouse.lLastY;
+                    auto const delta_x = static_cast<i32>(raw_input->data.mouse.lLastX);
+                    auto const delta_y = static_cast<i32>(raw_input->data.mouse.lLastY);
                     m_input.handle_mouse_delta({ delta_x, delta_y });
                 }
             }

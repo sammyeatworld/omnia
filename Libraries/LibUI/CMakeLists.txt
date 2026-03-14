@@ -1,4 +1,5 @@
 set(SOURCES
+        Platform/Event.cpp
         Platform/Input.cpp
 )
 
@@ -10,5 +11,4 @@ endif ()
 
 omnia_lib(LibUI
         SOURCES ${SOURCES}
-        LIBS LibCore
 )

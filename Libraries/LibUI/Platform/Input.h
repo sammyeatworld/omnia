@@ -13,7 +13,6 @@
 
 #include <array>
 #include <memory>
-#include <vector>
 
 namespace UI {
 
@@ -124,27 +123,6 @@ public:
         Total
     };
 
-    class Listener {
-        OA_MAKE_NONCOPYABLE(Listener);
-        OA_MAKE_NONMOVABLE(Listener);
-        OA_MAKE_DEFAULT_CONSTRUCTIBLE(Listener);
-
-    public:
-        virtual ~Listener() = default;
-
-        virtual auto on_key_pressed(Key /*unused*/) -> bool { return false; }
-        virtual auto on_key_released(Key /*unused*/) -> bool { return false; }
-
-        virtual auto on_mouse_button_pressed(MouseButton /*unused*/, Math::Vec2i const& /*unused*/) -> bool { return false; }
-        virtual auto on_mouse_button_released(MouseButton /*unused*/, Math::Vec2i const& /*unused*/) -> bool { return false; }
-
-        virtual auto on_mouse_move(Math::Vec2i const& /*unused*/) -> bool { return false; }
-        virtual auto on_mouse_delta(Math::Vec2i const& /*unused*/) -> bool { return false; }
-    };
-
-    void add_listener(Listener* listener);
-    void remove_listener(Listener* listener);
-
     void handle_key(Key key, bool pressed, bool was_pressed);
     void handle_mouse_button(MouseButton button, bool pressed, Math::Vec2i const& position = {});
     void handle_mouse_move(Math::Vec2i const& position);
@@ -153,12 +131,12 @@ public:
     auto is_key_down(Key key) const -> bool;
     auto is_mouse_button_down(MouseButton button) const -> bool;
     auto mouse_position() const -> Math::Vec2i const&;
-
 private:
-    std::vector<Listener*> m_listeners;
     Math::Vec2i m_mouse_position {};
     std::array<bool, static_cast<std::size_t>(Key::Total)> m_keys {};
+    std::array<bool, static_cast<std::size_t>(Key::Total)> m_last_keys {};
     std::array<bool, static_cast<std::size_t>(MouseButton::Total)> m_mouse_buttons {};
+    std::array<bool, static_cast<std::size_t>(MouseButton::Total)> m_last_mouse_buttons {};
 };
 
 }

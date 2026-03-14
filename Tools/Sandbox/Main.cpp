@@ -6,12 +6,13 @@
 
 #include <Common/Types.h>
 #include <LibGraphics/Device.h>
+#include <LibUI/Platform/Event.h>
 #include <LibUI/Platform/Window.h>
 
 #include <algorithm>
 #include <print>
 
-class Sandbox final : public UI::Input::Listener {
+class Sandbox final {
 public:
     static auto create() -> std::optional<std::unique_ptr<Sandbox>>
     {
@@ -44,6 +45,23 @@ public:
         }
         sandbox->m_swapchain = std::move(swapchain.value());
         sandbox->m_renderer = std::make_unique<Graphics::Renderer>(sandbox->m_graphics_device.get(), sandbox->m_swapchain.get());
+
+        UI::EventDispatcher::register_listener<UI::KeyEvent>([](UI::KeyEvent const&) -> bool {
+            std::println("Key event received!");
+            return false;
+        });
+        UI::EventDispatcher::register_listener<UI::MouseButtonEvent>([](UI::MouseButtonEvent const&) -> bool {
+            std::println("Mouse button event received!");
+            return false;
+        });
+        UI::EventDispatcher::register_listener<UI::WindowCloseEvent>([](UI::WindowCloseEvent const&) -> bool {
+            std::println("Window close event received!");
+            return false;
+        });
+        UI::EventDispatcher::register_listener<UI::WindowResizeEvent>([](UI::WindowResizeEvent const& event) -> bool {
+            std::println("Window resize event received! New size: {}x{}.", event.width, event.height);
+            return false;
+        });
         return sandbox;
     }
 
@@ -65,42 +83,6 @@ public:
 
             m_swapchain->present();
         }
-    }
-
-    auto on_key_pressed(UI::Input::Key key) -> bool override
-    {
-        std::println("Sandbox Testing: Key pressed: {}", static_cast<u8>(key));
-        return false;
-    }
-
-    auto on_key_released(UI::Input::Key key) -> bool override
-    {
-        std::println("Sandbox Testing: Key released: {}", static_cast<u8>(key));
-        return false;
-    }
-
-    auto on_mouse_button_pressed(UI::Input::MouseButton button, Math::Vec2i const& /*unused*/) -> bool override
-    {
-        std::println("Sandbox Testing: Mouse button pressed: {}", static_cast<u8>(button));
-        return false;
-    }
-
-    auto on_mouse_button_released(UI::Input::MouseButton button, Math::Vec2i const& /*unused*/) -> bool override
-    {
-        std::println("Sandbox Testing: Mouse button released: {}", static_cast<u8>(button));
-        return false;
-    }
-
-    auto on_mouse_move(Math::Vec2i const& /*position*/) -> bool override
-    {
-        //        std::println("Sandbox Testing: Mouse moved: ({}, {})", position.x, position.y);
-        return false;
-    }
-
-    auto on_mouse_delta(Math::Vec2i const& /*delta*/) -> bool override
-    {
-        //        std::println("Sandbox Testing: Mouse delta: ({}, {})", delta.x, delta.y);
-        return false;
     }
 private:
     Sandbox() = default;
