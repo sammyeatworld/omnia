@@ -6,8 +6,8 @@
 
 #pragma once
 
-#include "Input.h"
-#include "Window.h"
+#include "Platform/Input.h"
+#include "Platform/Window.h"
 #include <Common/Noncopyable.h>
 #include <Common/Types.h>
 
@@ -21,14 +21,14 @@ struct HINSTANCE__;
 using HWND = HWND__*;
 using HINSTANCE = HINSTANCE__*;
 
-namespace Core {
+namespace UI {
 
-class Win32Window final : public Window {
-    OA_MAKE_NONCOPYABLE(Win32Window);
-    OA_MAKE_NONMOVABLE(Win32Window);
+class WindowWin32 final : public Window {
+    OA_MAKE_NONCOPYABLE(WindowWin32);
+    OA_MAKE_NONMOVABLE(WindowWin32);
 
 public:
-    ~Win32Window() override;
+    ~WindowWin32() override;
 
     void poll_events() override;
     auto input() -> Input& override;
@@ -37,9 +37,9 @@ public:
     auto width() const -> i32 override;
     auto height() const -> i32 override;
 
-    static auto create(Configuration const& config) -> std::expected<std::unique_ptr<Win32Window>, std::string>;
+    static auto create(Configuration const& config) -> std::expected<std::unique_ptr<WindowWin32>, std::string>;
 private:
-    Win32Window() = default;
+    WindowWin32() = default;
 
     static auto window_procedure(HWND window_handle, u32 message, u64 first_param, i64 second_param) -> i64;
     auto handle_message(u32 message, u64 first_param, i64 second_param) -> bool;

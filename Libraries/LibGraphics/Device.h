@@ -12,8 +12,8 @@
 #include "Swapchain.h"
 #include "Texture.h"
 #include <Common/Noncopyable.h>
-#include <LibCore/Forward.h>
 #include <LibGraphics/Export.h>
+#include <LibUI/Forward.h>
 
 #include <expected>
 #include <memory>
@@ -32,9 +32,8 @@ public:
 
     virtual auto create_buffer(Buffer::Configuration const& config) const -> std::expected<std::unique_ptr<Buffer>, std::string> = 0;
     virtual auto create_shader(Shader::Configuration const& config) const -> std::expected<std::unique_ptr<Shader>, std::string> = 0;
-    virtual auto create_swapchain(Core::Window* window, Swapchain::Configuration const& config) const -> std::expected<std::unique_ptr<Swapchain>, std::string> = 0;
+    virtual auto create_swapchain(UI::Window* window, Swapchain::Configuration const& config) const -> std::expected<std::unique_ptr<Swapchain>, std::string> = 0;
     virtual auto create_texture(Texture::Configuration const& config) const -> std::expected<std::unique_ptr<Texture>, std::string> = 0;
-
 protected:
     Device() = default;
 };

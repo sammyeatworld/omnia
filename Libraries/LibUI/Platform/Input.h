@@ -8,16 +8,16 @@
 
 #include <Common/Noncopyable.h>
 #include <Common/Types.h>
-#include <LibCore/Export.h>
 #include <LibMath/Vec2.h>
+#include <LibUI/Export.h>
 
 #include <array>
 #include <memory>
 #include <vector>
 
-namespace Core {
+namespace UI {
 
-class CORE_API Input final {
+class UI_API Input final {
     OA_MAKE_NONCOPYABLE(Input);
     OA_MAKE_NONMOVABLE(Input);
     OA_MAKE_DEFAULT_CONSTRUCTIBLE(Input);
@@ -153,6 +153,7 @@ public:
     auto is_key_down(Key key) const -> bool;
     auto is_mouse_button_down(MouseButton button) const -> bool;
     auto mouse_position() const -> Math::Vec2i const&;
+
 private:
     std::vector<Listener*> m_listeners;
     Math::Vec2i m_mouse_position {};

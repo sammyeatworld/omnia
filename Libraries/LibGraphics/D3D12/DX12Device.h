@@ -11,7 +11,7 @@
 
 namespace Graphics {
 
-class DX12Device final: public Device {
+class DX12Device final : public Device {
     OA_MAKE_NONCOPYABLE(DX12Device);
     OA_MAKE_NONMOVABLE(DX12Device);
 
@@ -20,7 +20,7 @@ public:
 
     auto create_buffer(Buffer::Configuration const& config) const -> std::expected<std::unique_ptr<Buffer>, std::string> override;
     auto create_shader(Shader::Configuration const& config) const -> std::expected<std::unique_ptr<Shader>, std::string> override;
-    auto create_swapchain(Core::Window* window, Swapchain::Configuration const& config) const -> std::expected<std::unique_ptr<Swapchain>, std::string> override;
+    auto create_swapchain(UI::Window* window, Swapchain::Configuration const& config) const -> std::expected<std::unique_ptr<Swapchain>, std::string> override;
     auto create_texture(Texture::Configuration const& config) const -> std::expected<std::unique_ptr<Texture>, std::string> override;
 private:
     DX12Device() = default;

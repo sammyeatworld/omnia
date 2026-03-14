@@ -6,7 +6,7 @@
 
 #include "Input.h"
 
-namespace Core {
+namespace UI {
 
 void Input::add_listener(Listener* listener)
 {

@@ -8,7 +8,7 @@
 
 namespace Graphics {
 
-auto DX12Swapchain::create(Core::Window* window, Configuration const& config) -> std::expected<std::unique_ptr<DX12Swapchain>, std::string>
+auto DX12Swapchain::create(UI::Window* window, Configuration const& config) -> std::expected<std::unique_ptr<DX12Swapchain>, std::string>
 {
     (void)window;
     (void)config;

@@ -28,7 +28,7 @@ auto DX12Device::create_shader(Shader::Configuration const& config) const -> std
     return DX12Shader::create(config);
 }
 
-auto DX12Device::create_swapchain(Core::Window* window, Swapchain::Configuration const& config) const -> std::expected<std::unique_ptr<Swapchain>, std::string>
+auto DX12Device::create_swapchain(UI::Window* window, Swapchain::Configuration const& config) const -> std::expected<std::unique_ptr<Swapchain>, std::string>
 {
     return DX12Swapchain::create(window, config);
 }

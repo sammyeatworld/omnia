@@ -8,7 +8,7 @@
 
 namespace Graphics {
 
-auto MTLSwapchain::create(Core::Window* window, Configuration const& config) -> std::expected<std::unique_ptr<MTLSwapchain>, std::string>
+auto MTLSwapchain::create(UI::Window* window, Configuration const& config) -> std::expected<std::unique_ptr<MTLSwapchain>, std::string>
 {
     (void)window;
     (void)config;

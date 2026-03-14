@@ -23,5 +23,5 @@ set(SOURCES
 
 omnia_lib(LibGraphics
         SOURCES ${SOURCES}
-        LIBS LibCore
+        LIBS LibUI
 )

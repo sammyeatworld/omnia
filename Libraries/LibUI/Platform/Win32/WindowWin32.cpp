@@ -4,21 +4,22 @@
  * SPDX-License-Identifier: BSD-2-Clause
  */
 
-#include "Win32Window.h"
+#include "WindowWin32.h"
 
+#include <vector>
 #include <windows.h>
 #include <windowsx.h>
 
-namespace Core {
+namespace UI {
 
-auto Window::create(Core::Window::Configuration const& config) -> std::expected<std::unique_ptr<Window>, std::string>
+auto Window::create(Configuration const& config) -> std::expected<std::unique_ptr<Window>, std::string>
 {
-    return Win32Window::create(config);
+    return WindowWin32::create(config);
 }
 
-auto Win32Window::create(Configuration const& config) -> std::expected<std::unique_ptr<Win32Window>, std::string>
+auto WindowWin32::create(Configuration const& config) -> std::expected<std::unique_ptr<WindowWin32>, std::string>
 {
-    std::unique_ptr<Win32Window> window(new Win32Window);
+    std::unique_ptr<WindowWin32> window(new WindowWin32);
     window->m_instance = GetModuleHandle(nullptr);
     window->m_config = config;
 
@@ -70,22 +71,22 @@ auto Win32Window::create(Configuration const& config) -> std::expected<std::uniq
     return window;
 }
 
-Win32Window::~Win32Window()
+WindowWin32::~WindowWin32()
 {
     DestroyWindow(m_handle);
     UnregisterClass("omnia_window", m_instance);
 }
 
-auto Win32Window::window_procedure(HWND window_handle, u32 message, u64 first_param, i64 second_param) -> i64
+auto WindowWin32::window_procedure(HWND window_handle, u32 message, u64 first_param, i64 second_param) -> i64
 {
-    Win32Window* window {};
+    WindowWin32* window {};
 
     if (message == WM_NCCREATE) {
         auto* create_struct = reinterpret_cast<CREATESTRUCT*>(second_param);
-        window = static_cast<Win32Window*>(create_struct->lpCreateParams);
+        window = static_cast<WindowWin32*>(create_struct->lpCreateParams);
         SetWindowLongPtr(window_handle, GWLP_USERDATA, reinterpret_cast<LONG_PTR>(window));
     } else {
-        window = reinterpret_cast<Win32Window*>(GetWindowLongPtr(window_handle, GWLP_USERDATA));
+        window = reinterpret_cast<WindowWin32*>(GetWindowLongPtr(window_handle, GWLP_USERDATA));
     }
 
     if (window != nullptr && window->handle_message(message, first_param, second_param)) {
@@ -95,7 +96,7 @@ auto Win32Window::window_procedure(HWND window_handle, u32 message, u64 first_pa
     return DefWindowProc(window_handle, message, first_param, second_param);
 }
 
-auto Win32Window::handle_message(u32 message, u64 first_param, i64 second_param) -> bool
+auto WindowWin32::handle_message(u32 message, u64 first_param, i64 second_param) -> bool
 {
     switch (message) {
     case WM_CLOSE:
@@ -169,7 +170,7 @@ auto Win32Window::handle_message(u32 message, u64 first_param, i64 second_param)
     }
 }
 
-void Win32Window::poll_events()
+void WindowWin32::poll_events()
 {
     MSG msg {};
     while (PeekMessage(&msg, nullptr, 0, 0, PM_REMOVE)) {
@@ -178,27 +179,27 @@ void Win32Window::poll_events()
     }
 }
 
-auto Win32Window::input() -> Input&
+auto WindowWin32::input() -> Input&
 {
     return m_input;
 }
 
-auto Win32Window::is_running() const -> bool
+auto WindowWin32::is_running() const -> bool
 {
     return m_is_running;
 }
 
-auto Win32Window::title() const -> std::string const&
+auto WindowWin32::title() const -> std::string const&
 {
     return m_config.title;
 }
 
-auto Win32Window::width() const -> i32
+auto WindowWin32::width() const -> i32
 {
     return m_config.width;
 }
 
-auto Win32Window::height() const -> i32
+auto WindowWin32::height() const -> i32
 {
     return m_config.height;
 }

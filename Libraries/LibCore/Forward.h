@@ -8,6 +8,4 @@
 
 namespace Core {
 
-class Window;
-
 }

@@ -28,7 +28,7 @@ auto VkDevice::create_shader(Shader::Configuration const& config) const -> std::
     return VkShader::create(config);
 }
 
-auto VkDevice::create_swapchain(Core::Window* window, Swapchain::Configuration const& config) const -> std::expected<std::unique_ptr<Swapchain>, std::string>
+auto VkDevice::create_swapchain(UI::Window* window, Swapchain::Configuration const& config) const -> std::expected<std::unique_ptr<Swapchain>, std::string>
 {
     return VkSwapchain::create(window, config);
 }

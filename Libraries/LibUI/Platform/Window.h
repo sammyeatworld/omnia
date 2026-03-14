@@ -8,15 +8,14 @@
 
 #include "Input.h"
 #include <Common/Noncopyable.h>
-#include <Common/Platform.h>
 #include <Common/Types.h>
-#include <LibCore/Export.h>
+#include <LibUI/Export.h>
 
 #include <expected>
 #include <memory>
 #include <string>
 
-namespace Core {
+namespace UI {
 
 class Window {
     OA_MAKE_NONCOPYABLE(Window);
@@ -38,7 +37,7 @@ public:
     virtual auto width() const -> i32 = 0;
     virtual auto height() const -> i32 = 0;
 
-    static auto CORE_API create(Configuration const& config) -> std::expected<std::unique_ptr<Window>, std::string>;
+    static auto UI_API create(Configuration const& config) -> std::expected<std::unique_ptr<Window>, std::string>;
 protected:
     Window() = default;
 };

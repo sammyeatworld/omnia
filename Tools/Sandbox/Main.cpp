@@ -5,34 +5,32 @@
  */
 
 #include <Common/Types.h>
-#include <LibCore/Input.h>
-#include <LibCore/Window.h>
 #include <LibGraphics/Device.h>
-#include <algorithm>
+#include <LibUI/Platform/Window.h>
 
+#include <algorithm>
 #include <print>
 
-class Sandbox final : public Core::Input::Listener {
+class Sandbox final : public UI::Input::Listener {
 public:
     static auto create() -> std::optional<std::unique_ptr<Sandbox>>
     {
         std::unique_ptr<Sandbox> sandbox(new Sandbox);
 
-        Core::Window::Configuration const window_config {
+        UI::Window::Configuration const window_config {
             .title = "Omnia Sandbox",
             .width = 800,
             .height = 600
         };
-        auto window = Core::Window::create(window_config);
+        auto window = UI::Window::create(window_config);
         if (!window.has_value()) {
             std::println(stderr, "Failed to create window: {}.", window.error());
             return std::nullopt;
         }
 
         sandbox->m_window = std::move(window.value());
-        sandbox->m_window->input().add_listener(sandbox.get());
 
-        auto graphics_device = Graphics::Device::create(Graphics::Renderer::API::Metal);
+        auto graphics_device = Graphics::Device::create(Graphics::Renderer::API::Vulkan);
         if (!graphics_device.has_value()) {
             std::println(stderr, "Failed to create graphics device: {}.", graphics_device.error());
             return std::nullopt;
@@ -54,11 +52,11 @@ public:
         while (m_window->is_running()) {
             m_window->poll_events();
 
-            if (m_window->input().is_key_down(Core::Input::Key::F10)) {
+            if (m_window->input().is_key_down(UI::Input::Key::F10)) {
                 std::println("Input polling: F10 is down!");
             }
 
-            if (m_window->input().is_mouse_button_down(Core::Input::MouseButton::Left)) {
+            if (m_window->input().is_mouse_button_down(UI::Input::MouseButton::Left)) {
                 std::println("Input polling: Left mouse button is down!");
             }
 
@@ -69,25 +67,25 @@ public:
         }
     }
 
-    auto on_key_pressed(Core::Input::Key key) -> bool override
+    auto on_key_pressed(UI::Input::Key key) -> bool override
     {
         std::println("Sandbox Testing: Key pressed: {}", static_cast<u8>(key));
         return false;
     }
 
-    auto on_key_released(Core::Input::Key key) -> bool override
+    auto on_key_released(UI::Input::Key key) -> bool override
     {
         std::println("Sandbox Testing: Key released: {}", static_cast<u8>(key));
         return false;
     }
 
-    auto on_mouse_button_pressed(Core::Input::MouseButton button, Math::Vec2i const& /*unused*/) -> bool override
+    auto on_mouse_button_pressed(UI::Input::MouseButton button, Math::Vec2i const& /*unused*/) -> bool override
     {
         std::println("Sandbox Testing: Mouse button pressed: {}", static_cast<u8>(button));
         return false;
     }
 
-    auto on_mouse_button_released(Core::Input::MouseButton button, Math::Vec2i const& /*unused*/) -> bool override
+    auto on_mouse_button_released(UI::Input::MouseButton button, Math::Vec2i const& /*unused*/) -> bool override
     {
         std::println("Sandbox Testing: Mouse button released: {}", static_cast<u8>(button));
         return false;
@@ -107,7 +105,7 @@ public:
 private:
     Sandbox() = default;
 private:
-    std::unique_ptr<Core::Window> m_window {};
+    std::unique_ptr<UI::Window> m_window {};
     std::unique_ptr<Graphics::Device> m_graphics_device {};
     std::unique_ptr<Graphics::Swapchain> m_swapchain {};
     std::unique_ptr<Graphics::Renderer> m_renderer {};

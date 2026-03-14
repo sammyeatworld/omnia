@@ -8,4 +8,6 @@
 
 namespace UI {
 
+class Window;
+
 }
