@@ -30,6 +30,7 @@ private:
 private:
     VkInstance m_instance {};
     VkSurfaceKHR m_surface {};
+    VkDebugUtilsMessengerEXT m_debug_messenger {};
 };
 
 }
