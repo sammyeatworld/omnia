@@ -6,13 +6,13 @@
 
 #pragma once
 
+#include <array>
+#include <memory>
+
 #include <Common/Noncopyable.h>
 #include <Common/Types.h>
 #include <LibMath/Vec2.h>
 #include <LibUI/Export.h>
-
-#include <array>
-#include <memory>
 
 namespace UI {
 

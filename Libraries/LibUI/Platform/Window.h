@@ -6,14 +6,14 @@
 
 #pragma once
 
-#include "Input.h"
-#include <Common/Noncopyable.h>
-#include <Common/Types.h>
-#include <LibUI/Export.h>
-
 #include <expected>
 #include <memory>
 #include <string>
+
+#include <Common/Noncopyable.h>
+#include <Common/Types.h>
+#include <LibUI/Export.h>
+#include <LibUI/Platform/Input.h>
 
 namespace UI {
 

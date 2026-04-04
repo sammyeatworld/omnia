@@ -4,8 +4,8 @@
  * SPDX-License-Identifier: BSD-2-Clause
  */
 
-#include "Input.h"
-#include "Event.h"
+#include <LibUI/Platform/Input.h>
+#include <LibUi/Platform/Event.h>
 
 namespace UI {
 

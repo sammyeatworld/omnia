@@ -6,14 +6,14 @@
 
 #pragma once
 
-#include "Input.h"
-#include <LibMath/Vec2.h>
-#include <LibUI/Export.h>
-
 #include <functional>
 #include <typeindex>
 #include <variant>
 #include <vector>
+
+#include <LibMath/Vec2.h>
+#include <LibUI/Export.h>
+#include <LibUI/Platform/Input.h>
 
 namespace UI {
 
