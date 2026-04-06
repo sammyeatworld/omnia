@@ -175,6 +175,21 @@ VkDevice::~VkDevice()
     }
 }
 
+auto VkDevice::handle() const -> ::VkDevice
+{
+    return m_logical_device;
+}
+
+auto VkDevice::surface() const -> VkSurfaceKHR
+{
+    return m_surface;
+}
+
+auto VkDevice::selected_physical_device() const -> VkPhysicalDevice const*
+{
+    return m_physical_device;
+}
+
 auto VkDevice::physical_devices() const -> std::vector<std::string_view>
 {
     std::vector<std::string_view> device_names;
@@ -273,7 +288,7 @@ auto VkDevice::create_shader(Shader::Configuration const& config) const -> std::
 
 auto VkDevice::create_swapchain(Swapchain::Configuration const& config) const -> std::expected<std::unique_ptr<Swapchain>, std::string>
 {
-    return VkSwapchain::create(config);
+    return VkSwapchain::create(config, this);
 }
 
 auto VkDevice::create_texture(Texture::Configuration const& config) const -> std::expected<std::unique_ptr<Texture>, std::string>

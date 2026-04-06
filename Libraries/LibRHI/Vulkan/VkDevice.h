@@ -24,6 +24,9 @@ public:
 
     ~VkDevice() override;
 
+    auto handle() const -> ::VkDevice;
+    auto surface() const -> VkSurfaceKHR;
+    auto selected_physical_device() const -> VkPhysicalDevice const*;
     auto physical_devices() const -> std::vector<std::string_view> override;
     auto select_physical_device(std::string_view name) -> bool override;
 

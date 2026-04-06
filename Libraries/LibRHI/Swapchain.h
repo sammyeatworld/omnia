@@ -7,6 +7,7 @@
 #pragma once
 
 #include <Common/Noncopyable.h>
+#include <Common/Types.h>
 
 namespace RHI {
 
@@ -16,13 +17,14 @@ class Swapchain {
 
 public:
     struct Configuration {
-
+        i32 width;
+        i32 height;
     };
 
     virtual ~Swapchain() = default;
 
     virtual void present() = 0;
-    virtual auto config() const -> const Configuration& = 0;
+    virtual auto config() const -> Configuration const& = 0;
 protected:
     Swapchain() = default;
 };

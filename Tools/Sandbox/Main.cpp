@@ -51,7 +51,11 @@ public:
             }
         }
 
-        auto swapchain = sandbox->m_graphics_device->create_swapchain({});
+        RHI::Swapchain::Configuration const swapchain_config {
+            .width = window_config.width,
+            .height = window_config.height
+        };
+        auto swapchain = sandbox->m_graphics_device->create_swapchain(swapchain_config);
         if (!swapchain.has_value()) {
             std::println(stderr, "Failed to create swapchain: {}.", swapchain.error());
             return std::nullopt;

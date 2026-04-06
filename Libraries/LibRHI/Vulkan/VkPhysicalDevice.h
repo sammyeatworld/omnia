@@ -34,6 +34,7 @@ public:
     auto queue_family_indices() const -> QueueFamilyIndices const&;
     auto surface_formats() const -> std::vector<VkSurfaceFormatKHR> const&;
     auto present_modes() const -> std::vector<VkPresentModeKHR> const&;
+    auto surface_capabilities() const -> VkSurfaceCapabilitiesKHR const&;
 private:
     ::VkPhysicalDevice m_handle {};
     std::string m_name {};
@@ -41,6 +42,7 @@ private:
     QueueFamilyIndices m_queue_family_indices {};
     std::vector<VkSurfaceFormatKHR> m_surface_formats {};
     std::vector<VkPresentModeKHR> m_present_modes {};
+    VkSurfaceCapabilitiesKHR m_surface_capabilities {};
 };
 
 }
