@@ -4,22 +4,35 @@
  * SPDX-License-Identifier: BSD-2-Clause
  */
 
-#include <LibRHI/D3D12/DX12Device.h>
+#include <Common/Platform.h>
 #include <LibRHI/Device.h>
-#include <LibRHI/Metal/MTLDevice.h>
-#include <LibRHI/Vulkan/VkDevice.h>
+#ifdef OA_OS_WINDOWS
+#    include <LibRHI/D3D12/DX12Device.h>
+#elifdef OA_OS_MACOS
+#    include <LibRHI/Metal/MTLDevice.h>
+#endif
+#if defined(OA_OS_LINUX) || defined(OA_OS_WINDOWS)
+#    include <LibRHI/Vulkan/VkDevice.h>
+#endif
 
 namespace RHI {
 
 auto Device::create(Configuration const& config) -> std::expected<std::unique_ptr<Device>, std::string>
 {
     switch (config.api) {
-    case API::Vulkan:
-        return VkDevice::create(config);
+#ifdef OA_OS_WINDOWS
     case API::D3D12:
         return DX12Device::create();
+#elifdef OA_OS_MACOS
     case API::Metal:
         return MTLDevice::create();
+#endif
+#if defined(OA_OS_LINUX) || defined(OA_OS_WINDOWS)
+    case API::Vulkan:
+        return VkDevice::create(config);
+#endif
+    default:
+        return std::unexpected("Unsupported graphics API selected.");
     }
 }
 
