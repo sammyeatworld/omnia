@@ -58,11 +58,38 @@ auto VkSwapchain::create(Configuration const& config, VkDevice const* device) ->
         return std::unexpected(std::format("Failed to retrieve Vulkan swapchain images: {}", string_VkResult(result)));
     }
 
+    swapchain->m_image_views.reserve(swapchain->m_images.size());
+    for (auto const& image : swapchain->m_images) {
+        VkImageViewCreateInfo const image_view_create_info {
+            .sType = VK_STRUCTURE_TYPE_IMAGE_VIEW_CREATE_INFO,
+            .pNext = nullptr,
+            .flags = 0,
+            .image = image,
+            .viewType = VK_IMAGE_VIEW_TYPE_2D,
+            .format = surface_format.format,
+            .components = {
+                .r = VK_COMPONENT_SWIZZLE_IDENTITY,
+                .g = VK_COMPONENT_SWIZZLE_IDENTITY,
+                .b = VK_COMPONENT_SWIZZLE_IDENTITY,
+                .a = VK_COMPONENT_SWIZZLE_IDENTITY },
+            .subresourceRange = { .aspectMask = VK_IMAGE_ASPECT_COLOR_BIT, .baseMipLevel = 0, .levelCount = 1, .baseArrayLayer = 0, .layerCount = 1 }
+        };
+
+        VkImageView image_view {};
+        if (auto result = vkCreateImageView(swapchain->m_device->handle(), &image_view_create_info, nullptr, &image_view); result != VK_SUCCESS) {
+            return std::unexpected(std::format("Failed to create Vulkan swapchain image view: {}", string_VkResult(result)));
+        }
+        swapchain->m_image_views.push_back(image_view);
+    }
+
     return swapchain;
 }
 
 VkSwapchain::~VkSwapchain()
 {
+    for (auto* image_view : m_image_views) {
+        vkDestroyImageView(m_device->handle(), image_view, nullptr);
+    }
     if (m_swapchain != nullptr) {
         vkDestroySwapchainKHR(m_device->handle(), m_swapchain, nullptr);
     }

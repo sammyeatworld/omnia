@@ -38,7 +38,8 @@ private:
     Configuration m_config;
     VkSwapchainKHR m_swapchain {};
     const VkDevice* m_device {};
-    std::vector<VkImage> m_images {};
+    std::vector<VkImage> m_images;
+    std::vector<VkImageView> m_image_views;
 };
 
 }
