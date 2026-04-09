@@ -8,6 +8,7 @@ BraceWrapping:
 BreakBeforeBraces: Custom
 BreakBeforeInheritanceComma: true
 BreakConstructorInitializers: BeforeComma
+EmptyLineBeforeAccessModifier: Leave
 IndentPPDirectives: AfterHash
 IndentRequiresClause: false
 InsertNewlineAtEOF: true
