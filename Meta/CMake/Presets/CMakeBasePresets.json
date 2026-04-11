@@ -3,7 +3,15 @@
     "configurePresets": [
         {
             "hidden": true,
+            "name": "VCPKG",
+            "cacheVariables": {
+                "CMAKE_TOOLCHAIN_FILE": "$env{VCPKG_ROOT}/scripts/buildsystems/vcpkg.cmake"
+            }
+        },
+        {
+            "hidden": true,
             "name": "base",
+            "inherits": "VCPKG",
             "displayName": "Default Config",
             "generator": "Ninja",
             "binaryDir": "${sourceDir}/Build/${presetName}",

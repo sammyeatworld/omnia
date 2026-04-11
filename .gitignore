@@ -42,3 +42,4 @@ CMakeUserPresets.json
 !.vscode/extensions.json
 !.vscode/*.code-snippets
 .history/
+vcpkg_installed/
