@@ -6,6 +6,7 @@
 
 #pragma once
 
+#include <expected>
 #include <vector>
 
 #include <Common/Noncopyable.h>
@@ -15,7 +16,7 @@
 namespace RHI {
 
 class VkPhysicalDevice final {
-    OA_MAKE_DEFAULT_COPYABLE(VkPhysicalDevice);
+    OA_MAKE_NONCOPYABLE(VkPhysicalDevice);
     OA_MAKE_DEFAULT_MOVABLE(VkPhysicalDevice);
     OA_MAKE_DEFAULT_CONSTRUCTIBLE(VkPhysicalDevice);
 

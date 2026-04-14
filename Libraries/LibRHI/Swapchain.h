@@ -8,6 +8,7 @@
 
 #include <Common/Noncopyable.h>
 #include <Common/Types.h>
+#include <LibRHI/CommandBuffer.h>
 
 namespace RHI {
 
@@ -17,6 +18,7 @@ class Swapchain {
 
 public:
     struct Frame {
+        CommandBuffer* cmd {};
     };
 
     struct Configuration {
@@ -28,7 +30,7 @@ public:
     virtual ~Swapchain() = default;
 
     virtual auto begin_frame() -> Frame = 0;
-    virtual void end_frame(Frame const& frame) = 0;
+    virtual void end_frame() = 0;
 protected:
     Swapchain() = default;
 };

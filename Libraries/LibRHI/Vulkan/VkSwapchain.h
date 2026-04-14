@@ -12,6 +12,7 @@
 
 #include <Common/Noncopyable.h>
 #include <LibRHI/Swapchain.h>
+#include <LibRHI/Vulkan/VkCommandBuffer.h>
 #include <LibRHI/Vulkan/VkDevice.h>
 
 namespace RHI {
@@ -26,7 +27,7 @@ public:
     ~VkSwapchain() override;
 
     auto begin_frame() -> Frame override;
-    void end_frame(Frame const& frame) override;
+    void end_frame() override;
 private:
     VkSwapchain() = default;
 
@@ -41,16 +42,17 @@ private:
     auto create_sync_objects() -> std::expected<void, std::string>;
 private:
     Configuration m_config;
-    VkSwapchainKHR m_swapchain {};
+    VkSwapchainKHR m_handle {};
     RHI::VkDevice const* m_device {};
     std::vector<VkImage> m_images;
     std::vector<VkImageView> m_image_views;
 
     VkCommandPool m_graphics_command_pool {};
-    std::vector<VkCommandBuffer> m_command_buffers;
+    std::vector<RHI::VkCommandBuffer> m_command_buffers;
     std::vector<VkSemaphore> m_image_available_semaphores;
     std::vector<VkSemaphore> m_render_finished_semaphores;
     std::vector<VkFence> m_in_flight_fences;
+    u32 m_current_frame = 0;
 };
 
 }

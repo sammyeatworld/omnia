@@ -25,6 +25,7 @@ set(THIRD_PARTY_LIBS)
 if (LINUX OR WIN32)
     list(APPEND SOURCES
             Vulkan/VkBuffer.cpp
+            Vulkan/VkCommandBuffer.cpp
             Vulkan/VkDevice.cpp
             Vulkan/VkPhysicalDevice.cpp
             Vulkan/VkShader.cpp

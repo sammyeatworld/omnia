@@ -5,6 +5,7 @@
  */
 
 #include <algorithm>
+#include <print>
 #include <format>
 
 #include <LibRHI/Vulkan/VkSwapchain.h>
@@ -36,10 +37,14 @@ auto VkSwapchain::create(Configuration const& config, RHI::VkDevice const* devic
 
 VkSwapchain::~VkSwapchain()
 {
-    for (i32 i = 0; i < m_config.frames_in_flight; i++) {
-        vkDestroySemaphore(m_device->handle(), m_image_available_semaphores[i], nullptr);
-        vkDestroySemaphore(m_device->handle(), m_render_finished_semaphores[i], nullptr);
-        vkDestroyFence(m_device->handle(), m_in_flight_fences[i], nullptr);
+    for (auto* semaphore : m_image_available_semaphores) {
+        vkDestroySemaphore(m_device->handle(), semaphore, nullptr);
+    }
+    for (auto* semaphore : m_render_finished_semaphores) {
+        vkDestroySemaphore(m_device->handle(), semaphore, nullptr);
+    }
+    for (auto* fence : m_in_flight_fences) {
+        vkDestroyFence(m_device->handle(), fence, nullptr);
     }
     if (m_graphics_command_pool != VK_NULL_HANDLE) {
         vkDestroyCommandPool(m_device->handle(), m_graphics_command_pool, nullptr);
@@ -47,19 +52,29 @@ VkSwapchain::~VkSwapchain()
     for (auto* image_view : m_image_views) {
         vkDestroyImageView(m_device->handle(), image_view, nullptr);
     }
-    if (m_swapchain != nullptr) {
-        vkDestroySwapchainKHR(m_device->handle(), m_swapchain, nullptr);
+    if (m_handle != nullptr) {
+        vkDestroySwapchainKHR(m_device->handle(), m_handle, nullptr);
     }
 }
 
 auto VkSwapchain::begin_frame() -> Frame
 {
-    return {};
+    vkWaitForFences(m_device->handle(), 1, &m_in_flight_fences[m_current_frame], VK_TRUE, std::numeric_limits<u64>::max());
+    vkResetFences(m_device->handle(), 1, &m_in_flight_fences[m_current_frame]);
+
+    u32 image_index = 0;
+    vkAcquireNextImageKHR(m_device->handle(), m_handle, std::numeric_limits<u64>::max(), m_image_available_semaphores[m_current_frame], VK_NULL_HANDLE, &image_index);
+
+    m_command_buffers[m_current_frame].reset();
+    m_command_buffers[m_current_frame].begin();
+
+    return { &m_command_buffers[m_current_frame] };
 }
 
-auto VkSwapchain::end_frame(Frame const& frame) -> void
+auto VkSwapchain::end_frame() -> void
 {
-    (void)frame;
+    m_command_buffers[m_current_frame].end();
+    m_current_frame = (m_current_frame + 1) % m_config.frames_in_flight;
 }
 
 auto VkSwapchain::select_surface_format() const -> VkSurfaceFormatKHR
@@ -129,7 +144,7 @@ auto VkSwapchain::create_swapchain() -> std::expected<void, std::string>
         .oldSwapchain = VK_NULL_HANDLE
     };
 
-    if (auto result = vkCreateSwapchainKHR(m_device->handle(), &swapchain_create_info, nullptr, &m_swapchain); result != VK_SUCCESS) {
+    if (auto result = vkCreateSwapchainKHR(m_device->handle(), &swapchain_create_info, nullptr, &m_handle); result != VK_SUCCESS) {
         return std::unexpected(std::format("Failed to create Vulkan swapchain: {}", string_VkResult(result)));
     }
     return {};
@@ -140,11 +155,11 @@ auto VkSwapchain::create_images() -> std::expected<void, std::string>
     auto surface_format = select_surface_format();
 
     u32 actual_image_count = 0;
-    if (auto result = vkGetSwapchainImagesKHR(m_device->handle(), m_swapchain, &actual_image_count, nullptr); result != VK_SUCCESS) {
+    if (auto result = vkGetSwapchainImagesKHR(m_device->handle(), m_handle, &actual_image_count, nullptr); result != VK_SUCCESS) {
         return std::unexpected(std::format("Failed to retrieve Vulkan swapchain images: {}", string_VkResult(result)));
     }
     m_images.resize(actual_image_count);
-    if (auto result = vkGetSwapchainImagesKHR(m_device->handle(), m_swapchain, &actual_image_count, m_images.data()); result != VK_SUCCESS) {
+    if (auto result = vkGetSwapchainImagesKHR(m_device->handle(), m_handle, &actual_image_count, m_images.data()); result != VK_SUCCESS) {
         return std::unexpected(std::format("Failed to retrieve Vulkan swapchain images: {}", string_VkResult(result)));
     }
 
@@ -189,16 +204,13 @@ auto VkSwapchain::create_command_buffers() -> std::expected<void, std::string>
         return std::unexpected(std::format("Failed to create Vulkan graphics command pool: {}", string_VkResult(result)));
     }
 
-    m_command_buffers.resize(m_config.frames_in_flight);
-    VkCommandBufferAllocateInfo const command_buffer_allocate_info {
-        .sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_ALLOCATE_INFO,
-        .pNext = nullptr,
-        .commandPool = m_graphics_command_pool,
-        .level = VK_COMMAND_BUFFER_LEVEL_PRIMARY,
-        .commandBufferCount = static_cast<u32>(m_command_buffers.size())
-    };
-    if (auto result = vkAllocateCommandBuffers(m_device->handle(), &command_buffer_allocate_info, m_command_buffers.data()); result != VK_SUCCESS) {
-        return std::unexpected(std::format("Failed to allocate Vulkan command buffers: {}", string_VkResult(result)));
+    m_command_buffers.reserve(m_config.frames_in_flight);
+    for (i32 i = 0; i < m_config.frames_in_flight; i++) {
+        auto command_buffer = VkCommandBuffer::create(m_graphics_command_pool, m_device);
+        if (!command_buffer.has_value()) {
+            return std::unexpected(command_buffer.error());
+        }
+        m_command_buffers.push_back(std::move(command_buffer.value()));
     }
 
     return {};
