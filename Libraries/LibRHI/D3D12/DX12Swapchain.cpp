@@ -19,13 +19,14 @@ DX12Swapchain::~DX12Swapchain()
 {
 }
 
-void DX12Swapchain::present()
+auto DX12Swapchain::begin_frame() -> Frame
 {
+    return {};
 }
 
-auto DX12Swapchain::config() const -> Configuration const&
+void DX12Swapchain::end_frame(Frame const& frame)
 {
-    return m_config;
+    (void)frame;
 }
 
 }

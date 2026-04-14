@@ -34,7 +34,6 @@ public:
             .api = RHI::Device::API::Vulkan,
             .enable_debug_layer = true,
             .window = sandbox->m_window.get(),
-            .frames_in_flight = 2
         };
         auto graphics_device = RHI::Device::create(device_config);
         if (!graphics_device.has_value()) {
@@ -52,7 +51,8 @@ public:
 
         RHI::Swapchain::Configuration const swapchain_config {
             .width = window_config.width,
-            .height = window_config.height
+            .height = window_config.height,
+            .frames_in_flight = 2
         };
         auto swapchain = sandbox->m_graphics_device->create_swapchain(swapchain_config);
         if (!swapchain.has_value()) {
@@ -93,7 +93,8 @@ public:
                 std::println("Input polling: Left mouse button is down!");
             }
 
-            m_swapchain->present();
+            auto frame = m_swapchain->begin_frame();
+            m_swapchain->end_frame(frame);
         }
     }
 private:

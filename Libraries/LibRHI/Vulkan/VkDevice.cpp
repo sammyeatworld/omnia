@@ -51,9 +51,6 @@ auto VkDevice::create(Configuration const& config) -> std::expected<std::unique_
         .and_then([&]() {
             return device->create_logical_device();
         })
-        .and_then([&]() {
-            return device->create_command_buffers();
-        })
         .transform([&]() {
             return std::move(device);
         });
@@ -63,9 +60,6 @@ VkDevice::~VkDevice()
 {
     if (m_surface != nullptr) {
         vkDestroySurfaceKHR(m_instance, m_surface, nullptr);
-    }
-    if (m_graphics_command_pool != nullptr) {
-        vkDestroyCommandPool(m_logical_device, m_graphics_command_pool, nullptr);
     }
     if (m_debug_messenger != nullptr) {
         auto func = reinterpret_cast<PFN_vkDestroyDebugUtilsMessengerEXT>(vkGetInstanceProcAddr(m_instance, "vkDestroyDebugUtilsMessengerEXT"));
@@ -276,34 +270,6 @@ auto VkDevice::create_logical_device() -> std::expected<void, std::string>
     }
     vkGetDeviceQueue(m_logical_device, graphics_index, 0, &m_graphics_queue);
     vkGetDeviceQueue(m_logical_device, present_index, 0, &m_present_queue);
-    return {};
-}
-
-auto VkDevice::create_command_buffers() -> std::expected<void, std::string>
-{
-    auto queue_family_indices = m_physical_device->queue_family_indices();
-    VkCommandPoolCreateInfo const graphics_pool_create_info {
-        .sType = VK_STRUCTURE_TYPE_COMMAND_POOL_CREATE_INFO,
-        .pNext = nullptr,
-        .flags = VK_COMMAND_POOL_CREATE_RESET_COMMAND_BUFFER_BIT,
-        .queueFamilyIndex = queue_family_indices.graphics
-    };
-    if (auto result = vkCreateCommandPool(m_logical_device, &graphics_pool_create_info, nullptr, &m_graphics_command_pool); result != VK_SUCCESS) {
-        return std::unexpected(std::format("Failed to create Vulkan graphics command pool: {}", string_VkResult(result)));
-    }
-
-    m_command_buffers.resize(m_config.frames_in_flight);
-    VkCommandBufferAllocateInfo const command_buffer_allocate_info {
-        .sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_ALLOCATE_INFO,
-        .pNext = nullptr,
-        .commandPool = m_graphics_command_pool,
-        .level = VK_COMMAND_BUFFER_LEVEL_PRIMARY,
-        .commandBufferCount = static_cast<u32>(m_command_buffers.size())
-    };
-    if (auto result = vkAllocateCommandBuffers(m_logical_device, &command_buffer_allocate_info, m_command_buffers.data()); result != VK_SUCCESS) {
-        return std::unexpected(std::format("Failed to allocate Vulkan command buffers: {}", string_VkResult(result)));
-    }
-
     return {};
 }
 
