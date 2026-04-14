@@ -14,7 +14,7 @@
 
 class Sandbox final {
 public:
-    static auto create() -> std::optional<std::unique_ptr<Sandbox>>
+    static auto create() -> std::expected<std::unique_ptr<Sandbox>, std::string>
     {
         std::unique_ptr<Sandbox> sandbox(new Sandbox);
 
@@ -25,8 +25,7 @@ public:
         };
         auto window = UI::Window::create(window_config);
         if (!window.has_value()) {
-            std::println(stderr, "Failed to create window: {}.", window.error());
-            return std::nullopt;
+            return std::unexpected(std::move(window.error()));
         }
 
         sandbox->m_window = std::move(window.value());
@@ -39,8 +38,7 @@ public:
         };
         auto graphics_device = RHI::Device::create(device_config);
         if (!graphics_device.has_value()) {
-            std::println(stderr, "Failed to create graphics device: {}.", graphics_device.error());
-            return std::nullopt;
+            return std::unexpected(std::move(graphics_device.error()));
         }
 
         sandbox->m_graphics_device = std::move(graphics_device.value());
@@ -58,8 +56,7 @@ public:
         };
         auto swapchain = sandbox->m_graphics_device->create_swapchain(swapchain_config);
         if (!swapchain.has_value()) {
-            std::println(stderr, "Failed to create swapchain: {}.", swapchain.error());
-            return std::nullopt;
+            return std::unexpected(std::move(swapchain.error()));
         }
 
         sandbox->m_swapchain = std::move(swapchain.value());
@@ -111,7 +108,7 @@ auto main() -> i32
 {
     auto sandbox = Sandbox::create();
     if (!sandbox.has_value()) {
-        std::println(stderr, "Failed to create sandbox application.");
+        std::println(stderr, "{}", sandbox.error());
         return EXIT_FAILURE;
     }
     sandbox.value()->run();

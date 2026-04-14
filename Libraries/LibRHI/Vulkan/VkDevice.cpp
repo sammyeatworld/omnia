@@ -44,23 +44,19 @@ auto VkDevice::create(Configuration const& config) -> std::expected<std::unique_
     std::unique_ptr<VkDevice> device(new VkDevice);
     device->m_config = config;
 
-    if (auto result = device->create_instance(); !result) {
-        return std::unexpected(result.error());
-    }
-
-    if (auto result = device->create_surface(); !result) {
-        return std::unexpected(result.error());
-    }
-
-    if (auto result = device->create_logical_device(); !result) {
-        return std::unexpected(result.error());
-    }
-
-    if (auto result = device->create_command_buffers(); !result) {
-        return std::unexpected(result.error());
-    }
-
-    return device;
+    return device->create_instance()
+        .and_then([&]() {
+            return device->create_surface();
+        })
+        .and_then([&]() {
+            return device->create_logical_device();
+        })
+        .and_then([&]() {
+            return device->create_command_buffers();
+        })
+        .transform([&]() {
+            return std::move(device);
+        });
 }
 
 VkDevice::~VkDevice()
