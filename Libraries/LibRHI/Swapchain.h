@@ -19,6 +19,8 @@ class Swapchain {
 public:
     struct Frame {
         CommandBuffer* cmd {};
+        u32 index {};
+        u32 image_index {};
     };
 
     struct Configuration {
@@ -30,7 +32,7 @@ public:
     virtual ~Swapchain() = default;
 
     virtual auto begin_frame() -> Frame = 0;
-    virtual void end_frame() = 0;
+    virtual void end_frame(Frame const& frame) = 0;
 protected:
     Swapchain() = default;
 };

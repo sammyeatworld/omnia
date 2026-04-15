@@ -94,8 +94,7 @@ public:
             }
 
             auto frame = m_swapchain->begin_frame();
-            (void)frame;
-            m_swapchain->end_frame();
+            m_swapchain->end_frame(frame);
         }
     }
 private:

@@ -25,7 +25,7 @@ public:
     ~DX12Swapchain() override;
 
     auto begin_frame() -> Frame override;
-    void end_frame() override;
+    void end_frame(Frame const& frame) override;
 private:
     DX12Swapchain() = default;
 private:

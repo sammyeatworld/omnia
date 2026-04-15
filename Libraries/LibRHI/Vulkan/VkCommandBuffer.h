@@ -21,7 +21,7 @@ public:
 
     static auto create(VkCommandPool command_pool, RHI::VkDevice const* device) -> std::expected<VkCommandBuffer, std::string>;
 
-    auto handle() const -> void* override;
+    auto handle() const -> ::VkCommandBuffer;
     void reset() const override;
     void begin() const override;
     void end() const override;
@@ -30,5 +30,7 @@ private:
 private:
     ::VkCommandBuffer m_handle {};
 };
+
+auto unwrap(CommandBuffer const* command_buffer) -> VkCommandBuffer const*;
 
 }

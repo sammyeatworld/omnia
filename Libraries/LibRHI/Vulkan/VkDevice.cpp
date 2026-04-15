@@ -83,6 +83,16 @@ auto VkDevice::surface() const -> VkSurfaceKHR
     return m_surface;
 }
 
+auto VkDevice::graphics_queue() const -> VkQueue
+{
+    return m_graphics_queue;
+}
+
+auto VkDevice::present_queue() const -> VkQueue
+{
+    return m_present_queue;
+}
+
 auto VkDevice::selected_physical_device() const -> VkPhysicalDevice const*
 {
     return m_physical_device;

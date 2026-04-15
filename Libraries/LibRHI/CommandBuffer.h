@@ -14,7 +14,6 @@ class CommandBuffer {
 public:
     virtual ~CommandBuffer() = default;
 
-    virtual auto handle() const -> void* = 0;
     virtual void reset() const = 0;
     virtual void begin() const = 0;
     virtual void end() const = 0;

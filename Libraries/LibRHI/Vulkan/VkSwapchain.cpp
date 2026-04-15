@@ -5,8 +5,8 @@
  */
 
 #include <algorithm>
-#include <print>
 #include <format>
+#include <print>
 
 #include <LibRHI/Vulkan/VkSwapchain.h>
 #include <LibUI/Platform/Window.h>
@@ -19,6 +19,8 @@ auto VkSwapchain::create(Configuration const& config, RHI::VkDevice const* devic
 
     swapchain->m_device = device;
     swapchain->m_config = config;
+    swapchain->m_graphics_queue = device->graphics_queue();
+    swapchain->m_present_queue = device->present_queue();
 
     return swapchain->create_swapchain()
         .and_then([&]() {
@@ -68,13 +70,45 @@ auto VkSwapchain::begin_frame() -> Frame
     m_command_buffers[m_current_frame].reset();
     m_command_buffers[m_current_frame].begin();
 
-    return { &m_command_buffers[m_current_frame] };
+    return {
+        .cmd = &m_command_buffers[m_current_frame],
+        .index = m_current_frame,
+        .image_index = image_index
+    };
 }
 
-auto VkSwapchain::end_frame() -> void
+auto VkSwapchain::end_frame(Frame const& frame) -> void
 {
-    m_command_buffers[m_current_frame].end();
-    m_current_frame = (m_current_frame + 1) % m_config.frames_in_flight;
+    frame.cmd->end();
+
+    auto cmd_buffer_handle = unwrap(frame.cmd)->handle();
+    VkPipelineStageFlags const wait_flags = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT;
+    VkSubmitInfo const submit_info {
+        .sType = VK_STRUCTURE_TYPE_SUBMIT_INFO,
+        .pNext = nullptr,
+        .waitSemaphoreCount = 1,
+        .pWaitSemaphores = &m_image_available_semaphores[frame.index],
+        .pWaitDstStageMask = &wait_flags,
+        .commandBufferCount = 1,
+        .pCommandBuffers = &cmd_buffer_handle,
+        .signalSemaphoreCount = 1,
+        .pSignalSemaphores = &m_render_finished_semaphores[frame.index]
+    };
+    vkQueueSubmit(m_graphics_queue, 1, &submit_info, m_in_flight_fences[frame.index]);
+
+    VkPresentInfoKHR const present_info {
+        .sType = VK_STRUCTURE_TYPE_PRESENT_INFO_KHR,
+        .pNext = nullptr,
+        .waitSemaphoreCount = 1,
+        .pWaitSemaphores = &m_render_finished_semaphores[frame.index],
+        .swapchainCount = 1,
+        .pSwapchains = &m_handle,
+        .pImageIndices = &frame.image_index,
+        .pResults = nullptr
+    };
+    vkQueuePresentKHR(m_present_queue, &present_info);
+
+    m_current_frame = (frame.index + 1) % m_config.frames_in_flight;
 }
 
 auto VkSwapchain::select_surface_format() const -> VkSurfaceFormatKHR

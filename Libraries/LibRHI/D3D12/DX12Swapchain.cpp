@@ -24,8 +24,9 @@ auto DX12Swapchain::begin_frame() -> Frame
     return {};
 }
 
-void DX12Swapchain::end_frame()
+void DX12Swapchain::end_frame(Frame const& frame)
 {
+    (void)frame;
 }
 
 }

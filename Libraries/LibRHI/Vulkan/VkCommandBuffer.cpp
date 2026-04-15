@@ -30,7 +30,7 @@ VkCommandBuffer::~VkCommandBuffer()
 {
 }
 
-auto VkCommandBuffer::handle() const -> void*
+auto VkCommandBuffer::handle() const -> ::VkCommandBuffer
 {
     return m_handle;
 }
@@ -54,6 +54,11 @@ void VkCommandBuffer::begin() const
 void VkCommandBuffer::end() const
 {
     vkEndCommandBuffer(m_handle);
+}
+
+auto unwrap(CommandBuffer const* command_buffer) -> VkCommandBuffer const*
+{
+    return static_cast<VkCommandBuffer const*>(command_buffer);
 }
 
 }

@@ -27,7 +27,7 @@ public:
     ~VkSwapchain() override;
 
     auto begin_frame() -> Frame override;
-    void end_frame() override;
+    void end_frame(Frame const& frame) override;
 private:
     VkSwapchain() = default;
 
@@ -53,6 +53,9 @@ private:
     std::vector<VkSemaphore> m_render_finished_semaphores;
     std::vector<VkFence> m_in_flight_fences;
     u32 m_current_frame = 0;
+
+    VkQueue m_graphics_queue {};
+    VkQueue m_present_queue {};
 };
 
 }
