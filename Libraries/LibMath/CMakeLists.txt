@@ -1,7 +1,5 @@
-set(SOURCES
-        Temp.cpp
-)
+add_library(LibMath INTERFACE)
 
-omnia_lib(LibMath
-        SOURCES ${SOURCES}
+target_include_directories(LibMath INTERFACE
+        $<BUILD_INTERFACE:${OMNIA_SOURCE_DIR}/Libraries>
 )
