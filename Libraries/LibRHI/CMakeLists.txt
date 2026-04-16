@@ -28,6 +28,8 @@ if (LINUX OR WIN32)
             Vulkan/VkCommandBuffer.cpp
             Vulkan/VkDevice.cpp
             Vulkan/VkPhysicalDevice.cpp
+            Vulkan/VkRenderPass.cpp
+            Vulkan/VkRenderTarget.cpp
             Vulkan/VkShader.cpp
             Vulkan/VkSwapchain.cpp
             Vulkan/VkTexture.cpp

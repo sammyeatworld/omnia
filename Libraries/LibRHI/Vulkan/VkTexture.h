@@ -12,23 +12,35 @@
 
 #include <Common/Noncopyable.h>
 #include <LibRHI/Texture.h>
+#include <LibRHI/Vulkan/VkDevice.h>
 
 namespace RHI {
 
 class VkTexture final : public Texture {
     OA_MAKE_NONCOPYABLE(VkTexture);
-    OA_MAKE_NONMOVABLE(VkTexture);
+    OA_MAKE_DEFAULT_MOVABLE(VkTexture);
 
 public:
-    static auto create(Configuration const& config) -> std::expected<std::unique_ptr<VkTexture>, std::string>;
+    static auto create_owned(Configuration const& config, RHI::VkDevice const* device) -> std::expected<std::unique_ptr<VkTexture>, std::string>;
+    static auto create_borrowed(Configuration const& config, RHI::VkDevice const* device, VkImage image, VkImageView image_view) -> std::expected<std::unique_ptr<VkTexture>, std::string>;
 
     ~VkTexture() override;
 
     auto config() const -> Configuration const& override;
+    auto image() const -> VkImage;
+    auto image_view() const -> VkImageView;
 private:
     VkTexture() = default;
 private:
     Configuration m_config {};
+    RHI::VkDevice const* m_device {};
+    VkImage m_image {};
+    VkImageView m_image_view {};
+    bool m_owned = false;
 };
+
+auto to_rhi(VkFormat format) -> Texture::Format;
+auto to_vk(Texture::Format format) -> VkFormat;
+auto to_vk(Texture const* texture) -> VkTexture const*;
 
 }

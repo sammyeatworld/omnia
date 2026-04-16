@@ -6,8 +6,8 @@
 
 #include <algorithm>
 #include <format>
-#include <print>
 
+#include <LibRHI/Vulkan/VkRenderTarget.h>
 #include <LibRHI/Vulkan/VkSwapchain.h>
 #include <LibUI/Platform/Window.h>
 
@@ -39,6 +39,7 @@ auto VkSwapchain::create(Configuration const& config, RHI::VkDevice const* devic
 
 VkSwapchain::~VkSwapchain()
 {
+    vkDeviceWaitIdle(m_device->handle());
     for (auto* semaphore : m_image_available_semaphores) {
         vkDestroySemaphore(m_device->handle(), semaphore, nullptr);
     }
@@ -51,12 +52,19 @@ VkSwapchain::~VkSwapchain()
     if (m_graphics_command_pool != VK_NULL_HANDLE) {
         vkDestroyCommandPool(m_device->handle(), m_graphics_command_pool, nullptr);
     }
-    for (auto* image_view : m_image_views) {
-        vkDestroyImageView(m_device->handle(), image_view, nullptr);
-    }
     if (m_handle != nullptr) {
         vkDestroySwapchainKHR(m_device->handle(), m_handle, nullptr);
     }
+}
+
+auto VkSwapchain::format() const -> Texture::Format
+{
+    return to_rhi(m_surface_format.format);
+}
+
+auto VkSwapchain::textures() const -> std::vector<std::unique_ptr<Texture>> const&
+{
+    return m_textures;
 }
 
 auto VkSwapchain::begin_frame() -> Frame
@@ -72,35 +80,34 @@ auto VkSwapchain::begin_frame() -> Frame
 
     return {
         .cmd = &m_command_buffers[m_current_frame],
-        .index = m_current_frame,
         .image_index = image_index
     };
 }
 
-auto VkSwapchain::end_frame(Frame const& frame) -> void
+void VkSwapchain::end_frame(Frame const& frame)
 {
+    auto* vk_cmd_handle = to_vk(frame.cmd)->handle();
     frame.cmd->end();
 
-    auto cmd_buffer_handle = unwrap(frame.cmd)->handle();
     VkPipelineStageFlags const wait_flags = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT;
     VkSubmitInfo const submit_info {
         .sType = VK_STRUCTURE_TYPE_SUBMIT_INFO,
         .pNext = nullptr,
         .waitSemaphoreCount = 1,
-        .pWaitSemaphores = &m_image_available_semaphores[frame.index],
+        .pWaitSemaphores = &m_image_available_semaphores[m_current_frame],
         .pWaitDstStageMask = &wait_flags,
         .commandBufferCount = 1,
-        .pCommandBuffers = &cmd_buffer_handle,
+        .pCommandBuffers = &vk_cmd_handle,
         .signalSemaphoreCount = 1,
-        .pSignalSemaphores = &m_render_finished_semaphores[frame.index]
+        .pSignalSemaphores = &m_render_finished_semaphores[m_current_frame]
     };
-    vkQueueSubmit(m_graphics_queue, 1, &submit_info, m_in_flight_fences[frame.index]);
+    vkQueueSubmit(m_graphics_queue, 1, &submit_info, m_in_flight_fences[m_current_frame]);
 
     VkPresentInfoKHR const present_info {
         .sType = VK_STRUCTURE_TYPE_PRESENT_INFO_KHR,
         .pNext = nullptr,
         .waitSemaphoreCount = 1,
-        .pWaitSemaphores = &m_render_finished_semaphores[frame.index],
+        .pWaitSemaphores = &m_render_finished_semaphores[m_current_frame],
         .swapchainCount = 1,
         .pSwapchains = &m_handle,
         .pImageIndices = &frame.image_index,
@@ -108,16 +115,16 @@ auto VkSwapchain::end_frame(Frame const& frame) -> void
     };
     vkQueuePresentKHR(m_present_queue, &present_info);
 
-    m_current_frame = (frame.index + 1) % m_config.frames_in_flight;
+    m_current_frame = (m_current_frame + 1) % m_config.frames_in_flight;
 }
 
-auto VkSwapchain::select_surface_format() const -> VkSurfaceFormatKHR
+void VkSwapchain::select_surface_format()
 {
     auto const& surface_formats = m_device->selected_physical_device()->surface_formats();
     auto surface_format_if = std::ranges::find_if(surface_formats.begin(), surface_formats.end(), [](VkSurfaceFormatKHR const& surface_format) {
         return surface_format.format == VK_FORMAT_B8G8R8A8_SRGB && surface_format.colorSpace == VK_COLOR_SPACE_SRGB_NONLINEAR_KHR;
     });
-    return surface_format_if != surface_formats.end() ? *surface_format_if : surface_formats[0];
+    m_surface_format = surface_format_if != surface_formats.end() ? *surface_format_if : surface_formats[0];
 }
 
 auto VkSwapchain::select_present_mode() const -> VkPresentModeKHR
@@ -127,17 +134,20 @@ auto VkSwapchain::select_present_mode() const -> VkPresentModeKHR
     return present_mode_if != present_modes.end() ? *present_mode_if : VK_PRESENT_MODE_FIFO_KHR;
 }
 
-auto VkSwapchain::select_swap_extent() const -> VkExtent2D
+void VkSwapchain::select_swap_extent()
 {
     auto const& surface_capabilities = m_device->selected_physical_device()->surface_capabilities();
 
     if (surface_capabilities.currentExtent.width != std::numeric_limits<u32>::max()) {
-        return surface_capabilities.currentExtent;
+        m_extent = surface_capabilities.currentExtent;
     }
 
     auto width = std::clamp<u32>(m_config.width, surface_capabilities.minImageExtent.width, surface_capabilities.maxImageExtent.width);
     auto height = std::clamp<u32>(m_config.height, surface_capabilities.minImageExtent.height, surface_capabilities.maxImageExtent.height);
-    return { width, height };
+    m_extent = {
+        .width = width,
+        .height = height
+    };
 }
 
 auto VkSwapchain::select_image_count() const -> u32
@@ -152,10 +162,10 @@ auto VkSwapchain::select_image_count() const -> u32
 
 auto VkSwapchain::create_swapchain() -> std::expected<void, std::string>
 {
-    auto surface_format = select_surface_format();
-    auto present_mode = select_present_mode();
-    auto swap_extent = select_swap_extent();
+    select_surface_format();
+    select_swap_extent();
     auto image_count = select_image_count();
+    auto present_mode = select_present_mode();
 
     VkSwapchainCreateInfoKHR const swapchain_create_info {
         .sType = VK_STRUCTURE_TYPE_SWAPCHAIN_CREATE_INFO_KHR,
@@ -163,9 +173,9 @@ auto VkSwapchain::create_swapchain() -> std::expected<void, std::string>
         .flags = 0,
         .surface = m_device->surface(),
         .minImageCount = image_count,
-        .imageFormat = surface_format.format,
-        .imageColorSpace = surface_format.colorSpace,
-        .imageExtent = swap_extent,
+        .imageFormat = m_surface_format.format,
+        .imageColorSpace = m_surface_format.colorSpace,
+        .imageExtent = m_extent,
         .imageArrayLayers = 1,
         .imageUsage = VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT,
         .imageSharingMode = VK_SHARING_MODE_EXCLUSIVE,
@@ -186,8 +196,6 @@ auto VkSwapchain::create_swapchain() -> std::expected<void, std::string>
 
 auto VkSwapchain::create_images() -> std::expected<void, std::string>
 {
-    auto surface_format = select_surface_format();
-
     u32 actual_image_count = 0;
     if (auto result = vkGetSwapchainImagesKHR(m_device->handle(), m_handle, &actual_image_count, nullptr); result != VK_SUCCESS) {
         return std::unexpected(std::format("Failed to retrieve Vulkan swapchain images: {}", string_VkResult(result)));
@@ -197,15 +205,22 @@ auto VkSwapchain::create_images() -> std::expected<void, std::string>
         return std::unexpected(std::format("Failed to retrieve Vulkan swapchain images: {}", string_VkResult(result)));
     }
 
-    m_image_views.reserve(m_images.size());
-    for (auto const& image : m_images) {
+    m_textures.reserve(m_images.size());
+
+    for (auto* image : m_images) {
+        Texture::Configuration const texture_config {
+            .width = m_extent.width,
+            .height = m_extent.height,
+            .format = to_rhi(m_surface_format.format)
+        };
+
         VkImageViewCreateInfo const image_view_create_info {
             .sType = VK_STRUCTURE_TYPE_IMAGE_VIEW_CREATE_INFO,
             .pNext = nullptr,
             .flags = 0,
             .image = image,
             .viewType = VK_IMAGE_VIEW_TYPE_2D,
-            .format = surface_format.format,
+            .format = m_surface_format.format,
             .components = {
                 .r = VK_COMPONENT_SWIZZLE_IDENTITY,
                 .g = VK_COMPONENT_SWIZZLE_IDENTITY,
@@ -218,14 +233,20 @@ auto VkSwapchain::create_images() -> std::expected<void, std::string>
         if (auto result = vkCreateImageView(m_device->handle(), &image_view_create_info, nullptr, &image_view); result != VK_SUCCESS) {
             return std::unexpected(std::format("Failed to create Vulkan swapchain image view: {}", string_VkResult(result)));
         }
-        m_image_views.push_back(image_view);
+
+        auto texture = VkTexture::create_borrowed(texture_config, m_device, image, image_view);
+        if (!texture.has_value()) {
+            return std::unexpected(std::format("Failed to create Vulkan swapchain texture: {}", texture.error()));
+        }
+        m_textures.push_back(std::move(texture.value()));
     }
+
     return {};
 }
 
 auto VkSwapchain::create_command_buffers() -> std::expected<void, std::string>
 {
-    auto const physical_device = m_device->selected_physical_device();
+    auto const* physical_device = m_device->selected_physical_device();
     auto const queue_family_indices = physical_device->queue_family_indices();
 
     VkCommandPoolCreateInfo const graphics_pool_create_info {

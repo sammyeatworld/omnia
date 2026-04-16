@@ -9,8 +9,10 @@
 namespace RHI {
 
 class Buffer;
+class CommandBuffer;
 class Device;
-class Renderer;
+class RenderPass;
+class RenderTarget;
 class Shader;
 class Swapchain;
 class Texture;

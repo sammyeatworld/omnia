@@ -23,14 +23,18 @@ public:
 
     auto handle() const -> ::VkCommandBuffer;
     void reset() const override;
+
     void begin() const override;
     void end() const override;
+
+    void begin_render_pass(RenderPass const* render_pass, RenderTarget const* render_target) const override;
+    void end_render_pass() const override;
 private:
     VkCommandBuffer() = default;
 private:
     ::VkCommandBuffer m_handle {};
 };
 
-auto unwrap(CommandBuffer const* command_buffer) -> VkCommandBuffer const*;
+auto to_vk(CommandBuffer const* command_buffer) -> VkCommandBuffer const*;
 
 }

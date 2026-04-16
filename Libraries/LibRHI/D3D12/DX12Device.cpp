@@ -38,6 +38,19 @@ auto DX12Device::create_buffer(Buffer::Configuration const& config) const -> std
     return DX12Buffer::create(config);
 }
 
+auto DX12Device::create_render_pass(RenderPass::Configuration const& config) const -> std::expected<std::unique_ptr<RenderPass>, std::string>
+{
+    (void)config;
+    return {};
+}
+
+auto DX12Device::create_render_target(const RHI::RenderPass* render_pass, const RHI::Texture* texture) const -> std::expected<std::unique_ptr<RenderTarget>, std::string>
+{
+    (void)render_pass;
+    (void)texture;
+    return {};
+}
+
 auto DX12Device::create_shader(Shader::Configuration const& config) const -> std::expected<std::unique_ptr<Shader>, std::string>
 {
     return DX12Shader::create(config);

@@ -11,6 +11,8 @@
 #include <LibRHI/Vulkan/VkBuffer.h>
 #include <LibRHI/Vulkan/VkCommon.h>
 #include <LibRHI/Vulkan/VkDevice.h>
+#include <LibRHI/Vulkan/VkRenderPass.h>
+#include <LibRHI/Vulkan/VkRenderTarget.h>
 #include <LibRHI/Vulkan/VkShader.h>
 #include <LibRHI/Vulkan/VkSwapchain.h>
 #include <LibRHI/Vulkan/VkTexture.h>
@@ -283,6 +285,16 @@ auto VkDevice::create_logical_device() -> std::expected<void, std::string>
     return {};
 }
 
+auto VkDevice::create_render_pass(RenderPass::Configuration const& config) const -> std::expected<std::unique_ptr<RenderPass>, std::string>
+{
+    return VkRenderPass::create(config, this);
+}
+
+auto VkDevice::create_render_target(const RHI::RenderPass* render_pass, const RHI::Texture* texture) const -> std::expected<std::unique_ptr<RenderTarget>, std::string>
+{
+    return VkRenderTarget::create(render_pass, texture, this);
+}
+
 auto VkDevice::create_buffer(Buffer::Configuration const& config) const -> std::expected<std::unique_ptr<Buffer>, std::string>
 {
     return VkBuffer::create(config);
@@ -300,7 +312,7 @@ auto VkDevice::create_swapchain(Swapchain::Configuration const& config) const ->
 
 auto VkDevice::create_texture(Texture::Configuration const& config) const -> std::expected<std::unique_ptr<Texture>, std::string>
 {
-    return VkTexture::create(config);
+    return VkTexture::create_owned(config, this);
 }
 
 }

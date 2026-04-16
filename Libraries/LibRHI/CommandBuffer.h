@@ -7,16 +7,25 @@
 #pragma once
 
 #include <Common/Noncopyable.h>
+#include <Common/Types.h>
+#include <LibRHI/Forward.h>
 
 namespace RHI {
 
 class CommandBuffer {
+    OA_MAKE_NONCOPYABLE(CommandBuffer);
+    OA_MAKE_DEFAULT_MOVABLE(CommandBuffer);
+
 public:
     virtual ~CommandBuffer() = default;
 
     virtual void reset() const = 0;
+
     virtual void begin() const = 0;
     virtual void end() const = 0;
+
+    virtual void begin_render_pass(RenderPass const* render_pass, RenderTarget const* render_target) const = 0;
+    virtual void end_render_pass() const = 0;
 protected:
     CommandBuffer() = default;
 };

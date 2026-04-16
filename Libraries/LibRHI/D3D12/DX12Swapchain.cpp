@@ -19,6 +19,19 @@ DX12Swapchain::~DX12Swapchain()
 {
 }
 
+auto DX12Swapchain::format() const -> Texture::Format
+{
+    return Texture::Format::Unknown;
+}
+
+auto DX12Swapchain::textures() const -> std::vector<std::unique_ptr<Texture>> const&
+{
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wreturn-stack-address"
+    return {};
+#pragma GCC diagnostic pop
+}
+
 auto DX12Swapchain::begin_frame() -> Frame
 {
     return {};

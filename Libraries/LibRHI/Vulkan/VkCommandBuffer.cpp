@@ -7,6 +7,7 @@
 #include <format>
 
 #include <LibRHI/Vulkan/VkCommandBuffer.h>
+#include <LibRHI/Vulkan/VkRenderPass.h>
 
 namespace RHI {
 
@@ -56,7 +57,17 @@ void VkCommandBuffer::end() const
     vkEndCommandBuffer(m_handle);
 }
 
-auto unwrap(CommandBuffer const* command_buffer) -> VkCommandBuffer const*
+void VkCommandBuffer::begin_render_pass(RenderPass const* render_pass, RenderTarget const* render_target) const
+{
+    render_pass->begin(this, render_target);
+}
+
+void VkCommandBuffer::end_render_pass() const
+{
+    vkCmdEndRenderPass(m_handle);
+}
+
+auto to_vk(CommandBuffer const* command_buffer) -> VkCommandBuffer const*
 {
     return static_cast<VkCommandBuffer const*>(command_buffer);
 }

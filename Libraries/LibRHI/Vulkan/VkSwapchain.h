@@ -14,26 +14,27 @@
 #include <LibRHI/Swapchain.h>
 #include <LibRHI/Vulkan/VkCommandBuffer.h>
 #include <LibRHI/Vulkan/VkDevice.h>
+#include <LibRHI/Vulkan/VkTexture.h>
 
 namespace RHI {
 
 class VkSwapchain final : public Swapchain {
-    OA_MAKE_NONCOPYABLE(VkSwapchain);
-    OA_MAKE_NONMOVABLE(VkSwapchain);
-
 public:
     static auto create(Configuration const& config, RHI::VkDevice const* device) -> std::expected<std::unique_ptr<VkSwapchain>, std::string>;
 
     ~VkSwapchain() override;
+
+    auto format() const -> Texture::Format override;
+    auto textures() const -> std::vector<std::unique_ptr<Texture>> const& override;
 
     auto begin_frame() -> Frame override;
     void end_frame(Frame const& frame) override;
 private:
     VkSwapchain() = default;
 
-    auto select_surface_format() const -> VkSurfaceFormatKHR;
+    void select_surface_format();
     auto select_present_mode() const -> VkPresentModeKHR;
-    auto select_swap_extent() const -> VkExtent2D;
+    void select_swap_extent();
     auto select_image_count() const -> u32;
 
     auto create_swapchain() -> std::expected<void, std::string>;
@@ -42,10 +43,12 @@ private:
     auto create_sync_objects() -> std::expected<void, std::string>;
 private:
     Configuration m_config;
+    VkSurfaceFormatKHR m_surface_format {};
+    VkExtent2D m_extent {};
     VkSwapchainKHR m_handle {};
     RHI::VkDevice const* m_device {};
     std::vector<VkImage> m_images;
-    std::vector<VkImageView> m_image_views;
+    std::vector<std::unique_ptr<Texture>> m_textures;
 
     VkCommandPool m_graphics_command_pool {};
     std::vector<RHI::VkCommandBuffer> m_command_buffers;

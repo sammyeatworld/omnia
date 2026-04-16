@@ -27,7 +27,6 @@ public:
         if (!window.has_value()) {
             return std::unexpected(std::move(window.error()));
         }
-
         sandbox->m_window = std::move(window.value());
 
         RHI::Device::Configuration const device_config {
@@ -39,7 +38,6 @@ public:
         if (!graphics_device.has_value()) {
             return std::unexpected(std::move(graphics_device.error()));
         }
-
         sandbox->m_graphics_device = std::move(graphics_device.value());
 
         for (auto const& device_name : sandbox->m_graphics_device->physical_devices()) {
@@ -58,8 +56,32 @@ public:
         if (!swapchain.has_value()) {
             return std::unexpected(std::move(swapchain.error()));
         }
-
         sandbox->m_swapchain = std::move(swapchain.value());
+
+        RHI::RenderPass::Configuration const main_render_pass_config {
+            .color_attachments = {
+                {
+                    .format = sandbox->m_swapchain->format(),
+                    .load_op = RHI::RenderPass::LoadOp::Clear,
+                    .store_op = RHI::RenderPass::StoreOp::Store,
+                    .clear_color = { 1.0F, 0.0F, 0.0F, 1.0F }
+                }
+            }
+        };
+        auto main_render_pass = sandbox->m_graphics_device->create_render_pass(main_render_pass_config);
+        if (!main_render_pass.has_value()) {
+            return std::unexpected(std::move(main_render_pass.error()));
+        }
+        sandbox->m_main_render_pass = std::move(main_render_pass.value());
+
+        auto const& swapchain_textures = sandbox->m_swapchain->textures();
+        for (auto const& swapchain_texture : swapchain_textures) {
+            auto render_target = sandbox->m_graphics_device->create_render_target(sandbox->m_main_render_pass.get(), swapchain_texture.get());
+            if (!render_target.has_value()) {
+                return std::unexpected(std::move(render_target.error()));
+            }
+            sandbox->m_swapchain_render_targets.push_back(std::move(render_target.value()));
+        }
 
         UI::EventDispatcher::register_listener<UI::KeyEvent>([](UI::KeyEvent const&) -> bool {
             std::println("Key event received!");
@@ -94,15 +116,24 @@ public:
             }
 
             auto frame = m_swapchain->begin_frame();
+            {
+                frame.cmd->begin_render_pass(m_main_render_pass.get(), m_swapchain_render_targets[frame.image_index].get());
+                {
+
+                }
+                frame.cmd->end_render_pass();
+            }
             m_swapchain->end_frame(frame);
         }
     }
 private:
     Sandbox() = default;
 private:
-    std::unique_ptr<UI::Window> m_window {};
-    std::unique_ptr<RHI::Device> m_graphics_device {};
-    std::unique_ptr<RHI::Swapchain> m_swapchain {};
+    std::unique_ptr<UI::Window> m_window;
+    std::unique_ptr<RHI::Device> m_graphics_device;
+    std::unique_ptr<RHI::Swapchain> m_swapchain;
+    std::unique_ptr<RHI::RenderPass> m_main_render_pass;
+    std::vector<std::unique_ptr<RHI::RenderTarget>> m_swapchain_render_targets;
 };
 
 auto main() -> i32
