@@ -65,15 +65,37 @@ void VkCommandBuffer::begin_render_pass(RenderPass const* render_pass, RenderTar
 
 void VkCommandBuffer::end_render_pass() const
 {
+    // TODO: IMPORTANT: Test draw call
+    vkCmdDraw(m_handle, 3, 1, 0, 0);
+
     vkCmdEndRenderPass(m_handle);
 }
 
 void VkCommandBuffer::bind_pipeline(Pipeline const* pipeline) const
 {
     vkCmdBindPipeline(m_handle, VK_PIPELINE_BIND_POINT_GRAPHICS, to_vk(pipeline)->handle());
+}
 
-    // TODO: IMPORTANT: Test draw call
-    vkCmdDraw(m_handle, 3, 1, 0, 0);
+void VkCommandBuffer::set_viewport(u32 x, u32 y, u32 width, u32 height) const
+{
+    VkViewport viewport {
+        .x = static_cast<f32>(x),
+        .y = static_cast<f32>(y),
+        .width = static_cast<f32>(width),
+        .height = static_cast<f32>(height),
+        .minDepth = 0.0f,
+        .maxDepth = 1.0f
+    };
+    vkCmdSetViewport(m_handle, 0, 1, &viewport);
+}
+
+void VkCommandBuffer::set_scissor(u32 x, u32 y, u32 width, u32 height) const
+{
+    VkRect2D scissor {
+        .offset = { static_cast<i32>(x), static_cast<i32>(y) },
+        .extent = { width, height }
+    };
+    vkCmdSetScissor(m_handle, 0, 1, &scissor);
 }
 
 auto to_vk(CommandBuffer const* command_buffer) -> VkCommandBuffer const*

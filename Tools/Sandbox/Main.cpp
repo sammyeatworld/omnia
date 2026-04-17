@@ -105,8 +105,6 @@ public:
                 .test_enable = true,
                 .compare_op = RHI::CompareOp::Less
             },
-            .viewport_width = sandbox->m_swapchain->width(),
-            .viewport_height = sandbox->m_swapchain->height(),
             .render_pass = sandbox->m_main_render_pass.get()
         };
         TRY_ASSIGN(sandbox->m_pipeline, sandbox->m_graphics_device->create_pipeline(main_pipeline_config));
@@ -148,6 +146,8 @@ public:
                 frame.cmd->begin_render_pass(m_main_render_pass.get(), m_swapchain_render_targets[frame.image_index].get());
                 {
                     frame.cmd->bind_pipeline(m_pipeline.get());
+                    frame.cmd->set_viewport(0, 0, m_swapchain->width(), m_swapchain->height());
+                    frame.cmd->set_scissor(0, 0, m_swapchain->width(), m_swapchain->height());
                 }
                 frame.cmd->end_render_pass();
             }

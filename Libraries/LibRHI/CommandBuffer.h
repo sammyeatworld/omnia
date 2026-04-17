@@ -28,6 +28,9 @@ public:
     virtual void end_render_pass() const = 0;
 
     virtual void bind_pipeline(Pipeline const* pipeline) const = 0;
+
+    virtual void set_viewport(u32 x, u32 y, u32 width, u32 height) const = 0;
+    virtual void set_scissor(u32 x, u32 y, u32 width, u32 height) const = 0;
 protected:
     CommandBuffer() = default;
 };

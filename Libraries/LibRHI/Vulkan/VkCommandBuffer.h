@@ -31,6 +31,9 @@ public:
     void end_render_pass() const override;
 
     void bind_pipeline(Pipeline const* pipeline) const override;
+
+    void set_viewport(u32 x, u32 y, u32 width, u32 height) const override;
+    void set_scissor(u32 x, u32 y, u32 width, u32 height) const override;
 private:
     VkCommandBuffer() = default;
 private:

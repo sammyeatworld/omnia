@@ -61,8 +61,6 @@ public:
         Shader const* fragment_shader {};
         Rasterization rasterization {};
         Depth depth {};
-        u32 viewport_width {};
-        u32 viewport_height {};
         RenderPass const* render_pass {};
     };
 

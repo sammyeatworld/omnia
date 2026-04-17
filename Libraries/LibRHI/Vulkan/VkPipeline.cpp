@@ -61,30 +61,14 @@ auto VkPipeline::create(Configuration const& config, RHI::VkDevice const* device
         .primitiveRestartEnable = VK_FALSE,
     };
 
-    VkViewport const viewport {
-        .x = 0.0F,
-        .y = 0.0F,
-        .width = static_cast<f32>(config.viewport_width),
-        .height = static_cast<f32>(config.viewport_height),
-        .minDepth = 0.0F,
-        .maxDepth = 1.0F,
-    };
-
-    VkRect2D const scissor {
-        .offset = { 0, 0 },
-        .extent = {
-            .width = config.viewport_width,
-            .height = config.viewport_height }
-    };
-
     VkPipelineViewportStateCreateInfo const viewport_state_create_info {
         .sType = VK_STRUCTURE_TYPE_PIPELINE_VIEWPORT_STATE_CREATE_INFO,
         .pNext = nullptr,
         .flags = 0,
         .viewportCount = 1,
-        .pViewports = &viewport,
+        .pViewports = nullptr,
         .scissorCount = 1,
-        .pScissors = &scissor,
+        .pScissors = nullptr,
     };
 
     VkPipelineRasterizationStateCreateInfo const rasterization_state_create_info {
@@ -151,6 +135,19 @@ auto VkPipeline::create(Configuration const& config, RHI::VkDevice const* device
         return std::unexpected(std::format("Failed to create vulkan pipeline layout: {}", string_VkResult(result)));
     }
 
+    VkDynamicState dynamic_states[] = {
+        VK_DYNAMIC_STATE_VIEWPORT,
+        VK_DYNAMIC_STATE_SCISSOR,
+    };
+
+    VkPipelineDynamicStateCreateInfo const dynamic_state_create_info {
+        .sType = VK_STRUCTURE_TYPE_PIPELINE_DYNAMIC_STATE_CREATE_INFO,
+        .pNext = nullptr,
+        .flags = 0,
+        .dynamicStateCount = static_cast<u32>(std::size(dynamic_states)),
+        .pDynamicStates = dynamic_states,
+    };
+
     VkGraphicsPipelineCreateInfo const pipeline_create_info {
         .sType = VK_STRUCTURE_TYPE_GRAPHICS_PIPELINE_CREATE_INFO,
         .pNext = nullptr,
@@ -165,7 +162,7 @@ auto VkPipeline::create(Configuration const& config, RHI::VkDevice const* device
         .pMultisampleState = &multisample_state_create_info,
         .pDepthStencilState = nullptr,
         .pColorBlendState = &color_blend_state_create_info,
-        .pDynamicState = nullptr,
+        .pDynamicState = &dynamic_state_create_info,
         .layout = pipeline->m_layout,
         .renderPass = vk_render_pass,
         .subpass = 0,
