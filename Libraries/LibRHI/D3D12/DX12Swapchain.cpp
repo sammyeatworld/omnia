@@ -42,6 +42,10 @@ auto DX12Swapchain::textures() const -> std::vector<std::unique_ptr<Texture>> co
 #pragma GCC diagnostic pop
 }
 
+void DX12Swapchain::wait_idle() const
+{
+}
+
 auto DX12Swapchain::begin_frame() -> Frame
 {
     return {};

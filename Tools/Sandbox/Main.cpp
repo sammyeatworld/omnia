@@ -154,6 +154,11 @@ public:
             m_swapchain->end_frame(frame);
         }
     }
+
+    ~Sandbox()
+    {
+        m_swapchain->wait_idle();
+    }
 private:
     Sandbox() = default;
 private:

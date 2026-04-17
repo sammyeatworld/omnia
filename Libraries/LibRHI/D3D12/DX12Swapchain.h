@@ -30,6 +30,7 @@ public:
     auto format() const -> Texture::Format override;
     auto textures() const -> std::vector<std::unique_ptr<Texture>> const& override;
 
+    void wait_idle() const override;
     auto begin_frame() -> Frame override;
     void end_frame(Frame const& frame) override;
 private:

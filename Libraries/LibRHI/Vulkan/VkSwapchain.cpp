@@ -39,7 +39,6 @@ auto VkSwapchain::create(Configuration const& config, RHI::VkDevice const* devic
 
 VkSwapchain::~VkSwapchain()
 {
-    vkDeviceWaitIdle(m_device->handle());
     for (auto* semaphore : m_image_available_semaphores) {
         vkDestroySemaphore(m_device->handle(), semaphore, nullptr);
     }
@@ -75,6 +74,13 @@ auto VkSwapchain::format() const -> Texture::Format
 auto VkSwapchain::textures() const -> std::vector<std::unique_ptr<Texture>> const&
 {
     return m_textures;
+}
+
+void VkSwapchain::wait_idle() const
+{
+    for (auto* fence : m_in_flight_fences) {
+        vkWaitForFences(m_device->handle(), 1, &fence, VK_TRUE, std::numeric_limits<u64>::max());
+    }
 }
 
 auto VkSwapchain::begin_frame() -> Frame
