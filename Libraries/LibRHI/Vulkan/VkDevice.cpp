@@ -8,6 +8,7 @@
 #include <print>
 #include <vector>
 
+#define VMA_IMPLEMENTATION
 #include <LibRHI/Vulkan/VkBuffer.h>
 #include <LibRHI/Vulkan/VkCommon.h>
 #include <LibRHI/Vulkan/VkDevice.h>
@@ -54,6 +55,9 @@ auto VkDevice::create(Configuration const& config) -> std::expected<std::unique_
         .and_then([&]() {
             return device->create_logical_device();
         })
+        .and_then([&]() {
+            return device->create_allocator();
+        })
         .transform([&]() {
             return std::move(device);
         });
@@ -61,6 +65,9 @@ auto VkDevice::create(Configuration const& config) -> std::expected<std::unique_
 
 VkDevice::~VkDevice()
 {
+    if (m_allocator != nullptr) {
+        vmaDestroyAllocator(m_allocator);
+    }
     if (m_surface != nullptr) {
         vkDestroySurfaceKHR(m_instance, m_surface, nullptr);
     }
@@ -284,6 +291,28 @@ auto VkDevice::create_logical_device() -> std::expected<void, std::string>
     }
     vkGetDeviceQueue(m_logical_device, graphics_index, 0, &m_graphics_queue);
     vkGetDeviceQueue(m_logical_device, present_index, 0, &m_present_queue);
+    return {};
+}
+
+auto VkDevice::create_allocator() -> std::expected<void, std::string>
+{
+    VmaAllocatorCreateInfo const allocator_info {
+        .flags = 0,
+        .physicalDevice = m_physical_device->handle(),
+        .device = m_logical_device,
+        .preferredLargeHeapBlockSize = 0,
+        .pAllocationCallbacks = nullptr,
+        .pDeviceMemoryCallbacks = nullptr,
+        .pHeapSizeLimit = nullptr,
+        .pVulkanFunctions = nullptr,
+        .instance = m_instance,
+        .vulkanApiVersion = VK_API_VERSION_1_3,
+        .pTypeExternalMemoryHandleTypes = nullptr
+    };
+
+    if (auto result = vmaCreateAllocator(&allocator_info, &m_allocator); result != VK_SUCCESS) {
+        return std::unexpected(std::format("Failed to create Vulkan memory allocator: {}", string_VkResult(result)));
+    }
     return {};
 }
 

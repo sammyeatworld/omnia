@@ -46,13 +46,6 @@ public:
         };
         TRY_ASSIGN(sandbox->m_graphics_device, RHI::Device::create(device_config));
 
-        for (auto const& device_name : sandbox->m_graphics_device->physical_devices()) {
-            if (sandbox->m_graphics_device->select_physical_device(device_name)) {
-                std::println("Selected physical device: {}.", device_name);
-                break;
-            }
-        }
-
         RHI::Swapchain::Configuration const swapchain_config {
             .width = static_cast<u32>(window_config.width),
             .height = static_cast<u32>(window_config.height),

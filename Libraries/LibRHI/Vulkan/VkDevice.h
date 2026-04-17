@@ -7,6 +7,7 @@
 #pragma once
 
 #include <unordered_map>
+#include <vk_mem_alloc.h>
 
 #include <Common/Noncopyable.h>
 #include <LibRHI/Device.h>
@@ -45,8 +46,10 @@ private:
     auto create_instance() -> std::expected<void, std::string>;
     auto create_surface() -> std::expected<void, std::string>;
     auto create_logical_device() -> std::expected<void, std::string>;
+    auto create_allocator() -> std::expected<void, std::string>;
 private:
     Configuration m_config {};
+    VmaAllocator m_allocator {};
     VkInstance m_instance {};
     VkSurfaceKHR m_surface {};
     VkDebugUtilsMessengerEXT m_debug_messenger {};
