@@ -37,7 +37,8 @@ if (LINUX OR WIN32)
     )
 
     find_package(Vulkan REQUIRED)
-    list(APPEND THIRD_PARTY_LIBS Vulkan::Vulkan)
+    find_package(VulkanMemoryAllocator CONFIG REQUIRED)
+    list(APPEND THIRD_PARTY_LIBS Vulkan::Vulkan GPUOpen::VulkanMemoryAllocator)
 
     if (WIN32)
         add_compile_definitions(VK_USE_PLATFORM_WIN32_KHR)
