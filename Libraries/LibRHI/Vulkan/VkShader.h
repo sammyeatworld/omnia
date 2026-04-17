@@ -12,15 +12,13 @@
 
 #include <Common/Noncopyable.h>
 #include <LibRHI/Shader.h>
+#include <LibRHI/Vulkan/VkDevice.h>
 
 namespace RHI {
 
 class VkShader final : public Shader {
-    OA_MAKE_NONCOPYABLE(VkShader);
-    OA_MAKE_NONMOVABLE(VkShader);
-
 public:
-    static auto create(Configuration const& config) -> std::expected<std::unique_ptr<VkShader>, std::string>;
+    static auto create(Configuration const& config, RHI::VkDevice const* device) -> std::expected<std::unique_ptr<VkShader>, std::string>;
 
     ~VkShader() override;
 
@@ -29,6 +27,8 @@ private:
     VkShader() = default;
 private:
     Configuration m_config;
+    RHI::VkDevice const* m_device {};
+    VkShaderModule m_handle {};
 };
 
 }

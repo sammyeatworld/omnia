@@ -302,7 +302,7 @@ auto VkDevice::create_buffer(Buffer::Configuration const& config) const -> std::
 
 auto VkDevice::create_shader(Shader::Configuration const& config) const -> std::expected<std::unique_ptr<Shader>, std::string>
 {
-    return VkShader::create(config);
+    return VkShader::create(config, this);
 }
 
 auto VkDevice::create_swapchain(Swapchain::Configuration const& config) const -> std::expected<std::unique_ptr<Swapchain>, std::string>
