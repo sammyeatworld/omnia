@@ -32,8 +32,11 @@ public:
 
     virtual void poll_events() = 0;
     virtual auto input() -> Input& = 0;
+    virtual auto event_dispatcher() -> EventDispatcher& = 0;
+
     virtual auto is_running() const -> bool = 0;
     virtual auto is_minimized() const -> bool = 0;
+
     virtual auto title() const -> std::string const& = 0;
     virtual auto width() const -> i32 = 0;
     virtual auto height() const -> i32 = 0;

@@ -1,5 +1,4 @@
 set(SOURCES
-        Platform/Event.cpp
         Platform/Input.cpp
 )
 

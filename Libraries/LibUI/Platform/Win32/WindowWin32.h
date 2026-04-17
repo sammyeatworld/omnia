@@ -12,6 +12,7 @@
 
 #include <Common/Noncopyable.h>
 #include <Common/Types.h>
+#include <LibUI/Platform/Event.h>
 #include <LibUI/Platform/Input.h>
 #include <LibUI/Platform/Window.h>
 
@@ -32,8 +33,11 @@ public:
 
     void poll_events() override;
     auto input() -> Input& override;
+    auto event_dispatcher() -> EventDispatcher& override;
+
     auto is_running() const -> bool override;
     auto is_minimized() const -> bool override;
+
     auto title() const -> std::string const& override;
     auto width() const -> i32 override;
     auto height() const -> i32 override;
@@ -49,6 +53,7 @@ private:
     auto handle_message(u32 message, u64 first_param, i64 second_param) -> bool;
 private:
     Input m_input {};
+    EventDispatcher m_dispatcher {};
     HWND m_handle {};
     HINSTANCE m_instance {};
     bool m_is_running = true;

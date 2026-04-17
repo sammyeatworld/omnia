@@ -109,11 +109,11 @@ public:
         };
         TRY_ASSIGN(sandbox->m_pipeline, sandbox->m_graphics_device->create_pipeline(main_pipeline_config));
 
-        UI::EventDispatcher::register_listener<UI::WindowCloseEvent>([](UI::WindowCloseEvent const&) {
+        sandbox->m_window->event_dispatcher().register_listener<UI::WindowCloseEvent>([](UI::WindowCloseEvent const&) {
             std::println("Window close event received, exiting...");
             return true;
         });
-        UI::EventDispatcher::register_listener<UI::WindowResizeEvent>(std::bind_front(&Sandbox::on_resize, sandbox.get()));
+        sandbox->m_window->event_dispatcher().register_listener<UI::WindowResizeEvent>(std::bind_front(&Sandbox::on_resize, sandbox.get()));
         return sandbox;
     }
 

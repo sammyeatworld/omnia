@@ -4,10 +4,15 @@
  * SPDX-License-Identifier: BSD-2-Clause
  */
 
-#include <LibUI/Platform/Input.h>
 #include <LibUI/Platform/Event.h>
+#include <LibUI/Platform/Input.h>
 
 namespace UI {
+
+Input::Input(EventDispatcher* dispatcher)
+    : m_dispatcher(dispatcher)
+{
+}
 
 void Input::handle_key(Key key, bool pressed, bool was_pressed)
 {
@@ -20,7 +25,7 @@ void Input::handle_key(Key key, bool pressed, bool was_pressed)
             .key = key,
             .is_pressed = pressed,
         };
-        EventDispatcher::dispatch(event);
+        m_dispatcher->dispatch(event);
     }
 }
 
@@ -36,7 +41,7 @@ void Input::handle_mouse_button(MouseButton button, bool pressed, Math::Vec2i co
             .is_pressed = pressed,
             .position = position
         };
-        EventDispatcher::dispatch(event);
+        m_dispatcher->dispatch(event);
     }
 }
 
@@ -47,7 +52,7 @@ void Input::handle_mouse_move(Math::Vec2i const& position)
     MouseMoveEvent event {
         .position = position
     };
-    EventDispatcher::dispatch(event);
+    m_dispatcher->dispatch(event);
 }
 
 void Input::handle_mouse_delta(i32 dx, i32 dy)
@@ -56,7 +61,7 @@ void Input::handle_mouse_delta(i32 dx, i32 dy)
         .dx = dx,
         .dy = dy
     };
-    EventDispatcher::dispatch(event);
+    m_dispatcher->dispatch(event);
 }
 
 auto Input::is_key_down(Key key) const -> bool

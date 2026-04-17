@@ -21,8 +21,10 @@ auto Window::create(Configuration const& config) -> std::expected<std::unique_pt
 auto WindowWin32::create(Configuration const& config) -> std::expected<std::unique_ptr<WindowWin32>, std::string>
 {
     std::unique_ptr<WindowWin32> window(new WindowWin32);
+
     window->m_instance = GetModuleHandle(nullptr);
     window->m_config = config;
+    window->m_input = Input(&window->m_dispatcher);
 
     WNDCLASSEX const window_class {
         .cbSize = sizeof(WNDCLASSEX),
@@ -103,7 +105,7 @@ auto WindowWin32::handle_message(u32 message, u64 first_param, i64 second_param)
     case WM_CLOSE:
         m_is_running = false;
 
-        EventDispatcher::dispatch(WindowCloseEvent {});
+        m_dispatcher.dispatch(WindowCloseEvent {});
         return true;
     case WM_DESTROY:
         PostQuitMessage(0);
@@ -125,7 +127,7 @@ auto WindowWin32::handle_message(u32 message, u64 first_param, i64 second_param)
             .width = m_config.width,
             .height = m_config.height
         };
-        EventDispatcher::dispatch(event);
+        m_dispatcher.dispatch(event);
         return true;
     }
     case WM_KEYDOWN:
@@ -135,7 +137,7 @@ auto WindowWin32::handle_message(u32 message, u64 first_param, i64 second_param)
         auto const is_pressed = (message == WM_KEYDOWN || message == WM_SYSKEYDOWN);
         auto const was_pressed = (second_param & (1 << 30)) != 0;
 
-        m_input.handle_key(static_cast<Input::Key>(first_param), is_pressed, was_pressed);
+        m_input.handle_key(static_cast<Key>(first_param), is_pressed, was_pressed);
         return true;
     }
     case WM_LBUTTONDOWN:
@@ -146,19 +148,19 @@ auto WindowWin32::handle_message(u32 message, u64 first_param, i64 second_param)
     case WM_MBUTTONUP: {
         auto const is_pressed = (message == WM_LBUTTONDOWN || message == WM_RBUTTONDOWN || message == WM_MBUTTONDOWN);
 
-        auto button = Input::MouseButton::Middle;
+        auto button = MouseButton::Middle;
         switch (message) {
         case WM_LBUTTONDOWN:
         case WM_LBUTTONUP:
-            button = Input::MouseButton::Left;
+            button = MouseButton::Left;
             break;
         case WM_RBUTTONDOWN:
         case WM_RBUTTONUP:
-            button = Input::MouseButton::Right;
+            button = MouseButton::Right;
             break;
         case WM_MBUTTONDOWN:
         case WM_MBUTTONUP:
-            button = Input::MouseButton::Middle;
+            button = MouseButton::Middle;
             break;
         }
 
@@ -205,6 +207,11 @@ void WindowWin32::poll_events()
 auto WindowWin32::input() -> Input&
 {
     return m_input;
+}
+
+auto WindowWin32::event_dispatcher() -> EventDispatcher&
+{
+    return m_dispatcher;
 }
 
 auto WindowWin32::is_minimized() const -> bool
