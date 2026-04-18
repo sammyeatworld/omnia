@@ -74,6 +74,23 @@ public:
             sandbox->m_swapchain_render_targets.push_back(std::move(render_target.value()));
         }
 
+        struct Vertex {
+            Math::Vec3f position;
+        };
+
+        std::vector<Vertex> const triangle_vertices {
+            { .position = {  0.0F, -0.5F, 1.0F } },
+            { .position = {  0.5F,  0.5F, 1.0F } },
+            { .position = { -0.5F,  0.9F, 1.0F } }
+        };
+
+        RHI::Buffer::Configuration const triangle_vertex_buffer_config {
+            .size = sizeof(Vertex) * triangle_vertices.size(),
+            .usage = RHI::BufferUsage::Vertex,
+            .data = triangle_vertices.data()
+        };
+        TRY_ASSIGN(sandbox->m_triangle_vertex_buffer, sandbox->m_graphics_device->create_buffer(triangle_vertex_buffer_config));
+
         {
             Shader::Configuration shader_config;
             TRY_ASSIGN(shader_config, sandbox->m_import_manager.import <Shader::Configuration>("Resources/Shaders/BaseObject.fs.glsl"));
@@ -92,13 +109,24 @@ public:
             .rasterization = {
                 .cull_mode = RHI::CullMode::None,
                 .front_face = RHI::FrontFace::CounterClockwise,
-                .polygon_mode = RHI::PolygonMode::Line
+                .polygon_mode = RHI::PolygonMode::Fill
             },
             .depth = {
                 .test_enable = true,
                 .compare_op = RHI::CompareOp::Less
             },
-            .render_pass = sandbox->m_main_render_pass.get()
+            .render_pass = sandbox->m_main_render_pass.get(),
+            .vertex_binding =
+                {
+                    .stride = sizeof(Vertex),
+                    .attributes = {
+                        {
+                            .location = 0,
+                            .offset = offsetof(Vertex, position),
+                            .format = RHI::AttributeFormat::Float32Vec3
+                        }
+                    }
+                }
         };
         TRY_ASSIGN(sandbox->m_pipeline, sandbox->m_graphics_device->create_pipeline(main_pipeline_config));
 
@@ -172,8 +200,12 @@ public:
                 cmd->begin_render_pass(m_main_render_pass.get(), m_swapchain_render_targets[image_index].get());
                 {
                     cmd->bind_pipeline(m_pipeline.get());
-                    cmd->set_viewport(0, 0, m_swapchain->width(), m_swapchain->height());
-                    cmd->set_scissor(0, 0, m_swapchain->width(), m_swapchain->height());
+                    {
+                        cmd->set_viewport(0, 0, m_swapchain->width(), m_swapchain->height());
+                        cmd->set_scissor(0, 0, m_swapchain->width(), m_swapchain->height());
+                        cmd->bind_vertex_buffer(m_triangle_vertex_buffer.get());
+                        cmd->draw(3, 1, 0, 0);
+                    }
                 }
                 cmd->end_render_pass();
             }
@@ -197,6 +229,7 @@ private:
     Asset::ImportManager m_import_manager;
     std::unique_ptr<RHI::Shader> m_vertex_shader;
     std::unique_ptr<RHI::Shader> m_fragment_shader;
+    std::unique_ptr<RHI::Buffer> m_triangle_vertex_buffer;
     bool m_was_window_resized = false;
 };
 

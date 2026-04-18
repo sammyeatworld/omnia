@@ -58,6 +58,9 @@ auto VkDevice::create(Configuration const& config) -> std::expected<std::unique_
         .and_then([&]() {
             return device->create_allocator();
         })
+        .and_then([&]() {
+            return device->create_command_pools();
+        })
         .transform([&]() {
             return std::move(device);
         });
@@ -65,6 +68,12 @@ auto VkDevice::create(Configuration const& config) -> std::expected<std::unique_
 
 VkDevice::~VkDevice()
 {
+    if (m_graphics_command_pool != VK_NULL_HANDLE) {
+        vkDestroyCommandPool(m_logical_device, m_graphics_command_pool, nullptr);
+    }
+    if (m_transfer_command_pool != VK_NULL_HANDLE) {
+        vkDestroyCommandPool(m_logical_device, m_transfer_command_pool, nullptr);
+    }
     if (m_allocator != nullptr) {
         vmaDestroyAllocator(m_allocator);
     }
@@ -81,6 +90,11 @@ VkDevice::~VkDevice()
     if (m_instance != nullptr) {
         vkDestroyInstance(m_instance, nullptr);
     }
+}
+
+auto VkDevice::allocator() const -> VmaAllocator
+{
+    return m_allocator;
 }
 
 auto VkDevice::handle() const -> ::VkDevice
@@ -103,6 +117,21 @@ auto VkDevice::present_queue() const -> VkQueue
     return m_present_queue;
 }
 
+auto VkDevice::transfer_queue() const -> VkQueue
+{
+    return m_transfer_queue;
+}
+
+auto VkDevice::graphics_pool() const -> VkCommandPool
+{
+    return m_graphics_command_pool;
+}
+
+auto VkDevice::transfer_pool() const -> VkCommandPool
+{
+    return m_transfer_command_pool;
+}
+
 auto VkDevice::selected_physical_device() const -> VkPhysicalDevice const*
 {
     return m_physical_device;
@@ -121,6 +150,56 @@ auto VkDevice::select_physical_device(std::string_view name) -> bool
 {
     (void)name;
     return true;
+}
+
+auto VkDevice::begin_single_transfer_command() const -> std::expected<::VkCommandBuffer, std::string>
+{
+    VkCommandBufferAllocateInfo const allocate_info {
+        .sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_ALLOCATE_INFO,
+        .pNext = nullptr,
+        .commandPool = m_transfer_command_pool,
+        .level = VK_COMMAND_BUFFER_LEVEL_PRIMARY,
+        .commandBufferCount = 1
+    };
+
+    ::VkCommandBuffer command_buffer {};
+    if (auto result = vkAllocateCommandBuffers(m_logical_device, &allocate_info, &command_buffer); result != VK_SUCCESS) {
+        return std::unexpected(std::format("Failed to allocate Vulkan command buffer: {}", string_VkResult(result)));
+    }
+
+    VkCommandBufferBeginInfo const begin_info {
+        .sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO,
+        .pNext = nullptr,
+        .flags = VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT,
+        .pInheritanceInfo = nullptr
+    };
+    if (auto result = vkBeginCommandBuffer(command_buffer, &begin_info); result != VK_SUCCESS) {
+        return std::unexpected(std::format("Failed to begin Vulkan command buffer: {}", string_VkResult(result)));
+    }
+
+    return command_buffer;
+}
+
+void VkDevice::end_single_transfer_command(::VkCommandBuffer command_buffer) const
+{
+    vkEndCommandBuffer(command_buffer);
+
+    VkSubmitInfo const submit_info {
+        .sType = VK_STRUCTURE_TYPE_SUBMIT_INFO,
+        .pNext = nullptr,
+        .waitSemaphoreCount = 0,
+        .pWaitSemaphores = nullptr,
+        .pWaitDstStageMask = nullptr,
+        .commandBufferCount = 1,
+        .pCommandBuffers = &command_buffer,
+        .signalSemaphoreCount = 0,
+        .pSignalSemaphores = nullptr
+    };
+
+    vkQueueSubmit(m_transfer_queue, 1, &submit_info, VK_NULL_HANDLE);
+    vkQueueWaitIdle(m_transfer_queue);
+
+    vkFreeCommandBuffers(m_logical_device, m_transfer_command_pool, 1, &command_buffer);
 }
 
 auto VkDevice::create_instance() -> std::expected<void, std::string>
@@ -250,7 +329,7 @@ auto VkDevice::create_logical_device() -> std::expected<void, std::string>
 
     std::vector<VkDeviceQueueCreateInfo> queue_create_infos;
     f32 const queue_priority = 1.0F;
-    auto const& [graphics_index, present_index] = m_physical_device->queue_family_indices();
+    auto const [graphics_index, present_index, transfer_index] = m_physical_device->queue_family_indices();
 
     queue_create_infos.push_back({ .sType = VK_STRUCTURE_TYPE_DEVICE_QUEUE_CREATE_INFO,
         .pNext = nullptr,
@@ -263,6 +342,13 @@ auto VkDevice::create_logical_device() -> std::expected<void, std::string>
         .pNext = nullptr,
         .flags = 0,
         .queueFamilyIndex = present_index,
+        .queueCount = 1,
+        .pQueuePriorities = &queue_priority });
+
+    queue_create_infos.push_back({ .sType = VK_STRUCTURE_TYPE_DEVICE_QUEUE_CREATE_INFO,
+        .pNext = nullptr,
+        .flags = 0,
+        .queueFamilyIndex = transfer_index,
         .queueCount = 1,
         .pQueuePriorities = &queue_priority });
 
@@ -291,6 +377,7 @@ auto VkDevice::create_logical_device() -> std::expected<void, std::string>
     }
     vkGetDeviceQueue(m_logical_device, graphics_index, 0, &m_graphics_queue);
     vkGetDeviceQueue(m_logical_device, present_index, 0, &m_present_queue);
+    vkGetDeviceQueue(m_logical_device, transfer_index, 0, &m_transfer_queue);
     return {};
 }
 
@@ -316,6 +403,33 @@ auto VkDevice::create_allocator() -> std::expected<void, std::string>
     return {};
 }
 
+auto VkDevice::create_command_pools() -> std::expected<void, std::string>
+{
+    auto [graphics_index, present_index, transfer_index] = m_physical_device->queue_family_indices();
+
+    VkCommandPoolCreateInfo const tranfer_pool_create_info {
+        .sType = VK_STRUCTURE_TYPE_COMMAND_POOL_CREATE_INFO,
+        .pNext = nullptr,
+        .flags = VK_COMMAND_POOL_CREATE_RESET_COMMAND_BUFFER_BIT,
+        .queueFamilyIndex = transfer_index
+    };
+    if (auto result = vkCreateCommandPool(m_logical_device, &tranfer_pool_create_info, nullptr, &m_transfer_command_pool); result != VK_SUCCESS) {
+        return std::unexpected(std::format("Failed to create Vulkan graphics command pool: {}", string_VkResult(result)));
+    }
+
+    VkCommandPoolCreateInfo const graphics_pool_create_info {
+        .sType = VK_STRUCTURE_TYPE_COMMAND_POOL_CREATE_INFO,
+        .pNext = nullptr,
+        .flags = VK_COMMAND_POOL_CREATE_RESET_COMMAND_BUFFER_BIT,
+        .queueFamilyIndex = graphics_index
+    };
+    if (auto result = vkCreateCommandPool(m_logical_device, &graphics_pool_create_info, nullptr, &m_graphics_command_pool); result != VK_SUCCESS) {
+        return std::unexpected(std::format("Failed to create Vulkan graphics command pool: {}", string_VkResult(result)));
+    }
+
+    return {};
+}
+
 auto VkDevice::create_pipeline(Pipeline::Configuration const& config) const -> std::expected<std::unique_ptr<Pipeline>, std::string>
 {
     return VkPipeline::create(config, this);
@@ -333,7 +447,7 @@ auto VkDevice::create_render_target(const RHI::RenderPass* render_pass, const RH
 
 auto VkDevice::create_buffer(Buffer::Configuration const& config) const -> std::expected<std::unique_ptr<Buffer>, std::string>
 {
-    return VkBuffer::create(config);
+    return VkBuffer::create(config, this);
 }
 
 auto VkDevice::create_shader(Shader::Configuration const& config) const -> std::expected<std::unique_ptr<Shader>, std::string>

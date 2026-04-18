@@ -19,17 +19,4 @@ DX12Buffer::~DX12Buffer()
 {
 }
 
-void DX12Buffer::map()
-{
-}
-
-void DX12Buffer::unmap()
-{
-}
-
-auto DX12Buffer::config() const -> Configuration const&
-{
-    return m_config;
-}
-
 }

@@ -25,13 +25,23 @@ public:
 
     ~VkDevice() override;
 
+    auto allocator() const -> VmaAllocator;
     auto handle() const -> ::VkDevice;
     auto surface() const -> VkSurfaceKHR;
+
     auto graphics_queue() const -> VkQueue;
     auto present_queue() const -> VkQueue;
+    auto transfer_queue() const -> VkQueue;
+
+    auto graphics_pool() const -> VkCommandPool;
+    auto transfer_pool() const -> VkCommandPool;
+
     auto selected_physical_device() const -> VkPhysicalDevice const*;
     auto physical_devices() const -> std::vector<std::string_view> override;
     auto select_physical_device(std::string_view name) -> bool override;
+
+    auto begin_single_transfer_command() const -> std::expected<::VkCommandBuffer, std::string>;
+    void end_single_transfer_command(::VkCommandBuffer command_buffer) const;
 
     auto create_buffer(Buffer::Configuration const& config) const -> std::expected<std::unique_ptr<Buffer>, std::string> override;
     auto create_pipeline(Pipeline::Configuration const& config) const -> std::expected<std::unique_ptr<Pipeline>, std::string> override;
@@ -47,6 +57,7 @@ private:
     auto create_surface() -> std::expected<void, std::string>;
     auto create_logical_device() -> std::expected<void, std::string>;
     auto create_allocator() -> std::expected<void, std::string>;
+    auto create_command_pools() -> std::expected<void, std::string>;
 private:
     Configuration m_config {};
     VmaAllocator m_allocator {};
@@ -56,9 +67,13 @@ private:
 
     RHI::VkPhysicalDevice* m_physical_device {};
     ::VkDevice m_logical_device {};
+    std::unordered_map<std::string_view, RHI::VkPhysicalDevice> m_physical_devices;
+
     VkQueue m_graphics_queue {};
     VkQueue m_present_queue {};
-    std::unordered_map<std::string_view, RHI::VkPhysicalDevice> m_physical_devices;
+    VkQueue m_transfer_queue {};
+    VkCommandPool m_graphics_command_pool {};
+    VkCommandPool m_transfer_command_pool {};
 };
 
 }

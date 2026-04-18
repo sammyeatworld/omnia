@@ -23,10 +23,6 @@ public:
     static auto create(Configuration const& config) -> std::expected<std::unique_ptr<DX12Buffer>, std::string>;
 
     ~DX12Buffer() override;
-
-    void map() override;
-    void unmap() override;
-    auto config() const -> Configuration const& override;
 private:
     DX12Buffer() = default;
 private:

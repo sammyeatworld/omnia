@@ -7,23 +7,29 @@
 #pragma once
 
 #include <Common/Noncopyable.h>
+#include <Common/Types.h>
 
 namespace RHI {
 
+enum class BufferUsage : u8 {
+    Vertex = 0,
+    Index,
+    Uniform,
+    Storage,
+};
+
 class Buffer {
     OA_MAKE_NONCOPYABLE(Buffer);
-    OA_MAKE_NONMOVABLE(Buffer);
+    OA_MAKE_DEFAULT_MOVABLE(Buffer);
 
 public:
     struct Configuration {
-
+        u64 size;
+        BufferUsage usage;
+        void const* data;
     };
 
     virtual ~Buffer() = default;
-
-    virtual void map() = 0;
-    virtual void unmap() = 0;
-    virtual auto config() const -> Configuration const& = 0;
 protected:
     Buffer() = default;
 };

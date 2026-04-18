@@ -24,6 +24,7 @@ public:
     struct QueueFamilyIndices {
         u32 graphics = -1U;
         u32 present = -1U;
+        u32 transfer = -1U;
     };
 
     VkPhysicalDevice(::VkPhysicalDevice handle, VkSurfaceKHR surface);

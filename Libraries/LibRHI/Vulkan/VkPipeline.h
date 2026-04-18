@@ -40,5 +40,6 @@ auto to_vk(CullMode cull_mode) -> VkCullModeFlags;
 auto to_vk(FrontFace front_face) -> VkFrontFace;
 auto to_vk(PolygonMode polygon_mode) -> VkPolygonMode;
 auto to_vk(CompareOp compare_op) -> VkCompareOp;
+auto to_vk(AttributeFormat format) -> VkFormat;
 
 }

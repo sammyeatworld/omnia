@@ -25,6 +25,8 @@ VkPhysicalDevice::VkPhysicalDevice(::VkPhysicalDevice handle, VkSurfaceKHR surfa
     for (u32 i = 0; i < queue_family_count; i++) {
         if ((queue_families[i].queueFlags & VK_QUEUE_GRAPHICS_BIT) != 0U) {
             m_queue_family_indices.graphics = i;
+        } else if ((queue_families[i].queueFlags & VK_QUEUE_TRANSFER_BIT) != 0U) {
+            m_queue_family_indices.transfer = i;
         }
 
         VkBool32 present_support = VK_FALSE;

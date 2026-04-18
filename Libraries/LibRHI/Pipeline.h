@@ -6,6 +6,8 @@
 
 #pragma once
 
+#include <vector>
+
 #include <Common/Noncopyable.h>
 #include <Common/Types.h>
 #include <LibRHI/Forward.h>
@@ -40,6 +42,13 @@ enum class CompareOp : u8 {
     Always
 };
 
+enum class AttributeFormat : u8 {
+    Float32 = 0,
+    Float32Vec2,
+    Float32Vec3,
+    Float32Vec4,
+};
+
 class Pipeline {
     OA_MAKE_NONCOPYABLE(Pipeline);
     OA_MAKE_DEFAULT_MOVABLE(Pipeline);
@@ -56,12 +65,24 @@ public:
         CompareOp compare_op;
     };
 
+    struct VertexAttribute {
+        u32 location;
+        u32 offset;
+        AttributeFormat format;
+    };
+
+    struct VertexBinding {
+        u32 stride;
+        std::vector<VertexAttribute> attributes;
+    };
+
     struct Configuration {
         Shader const* vertex_shader {};
         Shader const* fragment_shader {};
         Rasterization rasterization {};
         Depth depth {};
         RenderPass const* render_pass {};
+        VertexBinding vertex_binding {};
     };
 
     virtual ~Pipeline() = default;

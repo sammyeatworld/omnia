@@ -7,7 +7,6 @@
 #include <algorithm>
 #include <cassert>
 #include <format>
-#include <print>
 
 #include <LibRHI/Vulkan/VkRenderTarget.h>
 #include <LibRHI/Vulkan/VkSwapchain.h>
@@ -21,8 +20,6 @@ auto VkSwapchain::create(Configuration const& config, RHI::VkDevice const* devic
 
     swapchain->m_device = device;
     swapchain->m_config = config;
-    swapchain->m_graphics_queue = device->graphics_queue();
-    swapchain->m_present_queue = device->present_queue();
 
     return swapchain->create_swapchain()
         .and_then([&]() {
@@ -49,9 +46,6 @@ VkSwapchain::~VkSwapchain()
     }
     for (auto* fence : m_in_flight_fences) {
         vkDestroyFence(m_device->handle(), fence, nullptr);
-    }
-    if (m_graphics_command_pool != VK_NULL_HANDLE) {
-        vkDestroyCommandPool(m_device->handle(), m_graphics_command_pool, nullptr);
     }
     if (m_handle != nullptr) {
         vkDestroySwapchainKHR(m_device->handle(), m_handle, nullptr);
@@ -143,7 +137,7 @@ void VkSwapchain::end_frame(Frame const& frame)
         .signalSemaphoreCount = 1,
         .pSignalSemaphores = &m_render_finished_semaphores[m_current_frame]
     };
-    vkQueueSubmit(m_graphics_queue, 1, &submit_info, m_in_flight_fences[m_current_frame]);
+    vkQueueSubmit(m_device->graphics_queue(), 1, &submit_info, m_in_flight_fences[m_current_frame]);
 
     VkPresentInfoKHR const present_info {
         .sType = VK_STRUCTURE_TYPE_PRESENT_INFO_KHR,
@@ -155,7 +149,7 @@ void VkSwapchain::end_frame(Frame const& frame)
         .pImageIndices = &frame.image_index,
         .pResults = nullptr
     };
-    vkQueuePresentKHR(m_present_queue, &present_info);
+    vkQueuePresentKHR(m_device->present_queue(), &present_info);
 
     m_current_frame = (m_current_frame + 1) % m_config.frames_in_flight;
 }
@@ -288,22 +282,9 @@ auto VkSwapchain::create_images() -> std::expected<void, std::string>
 
 auto VkSwapchain::create_command_buffers() -> std::expected<void, std::string>
 {
-    auto const* physical_device = m_device->selected_physical_device();
-    auto const& queue_family_indices = physical_device->queue_family_indices();
-
-    VkCommandPoolCreateInfo const graphics_pool_create_info {
-        .sType = VK_STRUCTURE_TYPE_COMMAND_POOL_CREATE_INFO,
-        .pNext = nullptr,
-        .flags = VK_COMMAND_POOL_CREATE_RESET_COMMAND_BUFFER_BIT,
-        .queueFamilyIndex = queue_family_indices.graphics
-    };
-    if (auto result = vkCreateCommandPool(m_device->handle(), &graphics_pool_create_info, nullptr, &m_graphics_command_pool); result != VK_SUCCESS) {
-        return std::unexpected(std::format("Failed to create Vulkan graphics command pool: {}", string_VkResult(result)));
-    }
-
     m_command_buffers.reserve(m_config.frames_in_flight);
     for (i32 i = 0; i < m_config.frames_in_flight; i++) {
-        auto command_buffer = VkCommandBuffer::create(m_graphics_command_pool, m_device);
+        auto command_buffer = VkCommandBuffer::create(m_device->graphics_pool(), m_device);
         if (!command_buffer.has_value()) {
             return std::unexpected(command_buffer.error());
         }

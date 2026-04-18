@@ -43,14 +43,30 @@ auto VkPipeline::create(Configuration const& config, RHI::VkDevice const* device
         }
     };
 
+    VkVertexInputBindingDescription const vertex_input_binding_description {
+        .binding = 0,
+        .stride = config.vertex_binding.stride,
+        .inputRate = VK_VERTEX_INPUT_RATE_VERTEX,
+    };
+
+    std::vector<VkVertexInputAttributeDescription> vertex_input_attribute_descriptions;
+    for (auto const& attribute : config.vertex_binding.attributes) {
+        vertex_input_attribute_descriptions.push_back({
+            .location = attribute.location,
+            .binding = 0,
+            .format = to_vk(attribute.format),
+            .offset = attribute.offset,
+        });
+    }
+
     VkPipelineVertexInputStateCreateInfo const vertex_input_state_create_info {
         .sType = VK_STRUCTURE_TYPE_PIPELINE_VERTEX_INPUT_STATE_CREATE_INFO,
         .pNext = nullptr,
         .flags = 0,
-        .vertexBindingDescriptionCount = 0,
-        .pVertexBindingDescriptions = nullptr,
-        .vertexAttributeDescriptionCount = 0,
-        .pVertexAttributeDescriptions = nullptr,
+        .vertexBindingDescriptionCount = 1,
+        .pVertexBindingDescriptions = &vertex_input_binding_description,
+        .vertexAttributeDescriptionCount = static_cast<u32>(vertex_input_attribute_descriptions.size()),
+        .pVertexAttributeDescriptions = vertex_input_attribute_descriptions.data(),
     };
 
     VkPipelineInputAssemblyStateCreateInfo const input_assembly_state_create_info {
@@ -135,7 +151,7 @@ auto VkPipeline::create(Configuration const& config, RHI::VkDevice const* device
         return std::unexpected(std::format("Failed to create vulkan pipeline layout: {}", string_VkResult(result)));
     }
 
-    VkDynamicState dynamic_states[] = {
+    VkDynamicState const dynamic_states[] = {
         VK_DYNAMIC_STATE_VIEWPORT,
         VK_DYNAMIC_STATE_SCISSOR,
     };
@@ -255,6 +271,20 @@ auto to_vk(CompareOp compare_op) -> VkCompareOp
         return VK_COMPARE_OP_GREATER_OR_EQUAL;
     case CompareOp::Always:
         return VK_COMPARE_OP_ALWAYS;
+    }
+}
+
+auto to_vk(AttributeFormat format) -> VkFormat
+{
+    switch (format) {
+    case AttributeFormat::Float32Vec4:
+        return VK_FORMAT_R32G32B32A32_SFLOAT;
+    case AttributeFormat::Float32Vec3:
+        return VK_FORMAT_R32G32B32_SFLOAT;
+    case AttributeFormat::Float32Vec2:
+        return VK_FORMAT_R32G32_SFLOAT;
+    case AttributeFormat::Float32:
+        return VK_FORMAT_R32_SFLOAT;
     }
 }
 

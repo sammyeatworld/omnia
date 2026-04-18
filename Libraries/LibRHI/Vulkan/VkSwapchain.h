@@ -60,15 +60,11 @@ private:
     std::vector<VkImage> m_images;
     std::vector<std::unique_ptr<Texture>> m_textures;
 
-    VkCommandPool m_graphics_command_pool {};
     std::vector<RHI::VkCommandBuffer> m_command_buffers;
     std::vector<VkSemaphore> m_image_available_semaphores;
     std::vector<VkSemaphore> m_render_finished_semaphores;
     std::vector<VkFence> m_in_flight_fences;
     u32 m_current_frame = 0;
-
-    VkQueue m_graphics_queue {};
-    VkQueue m_present_queue {};
 };
 
 }

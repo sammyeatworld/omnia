@@ -6,6 +6,7 @@
 
 #include <format>
 
+#include <LibRHI/Vulkan/VkBuffer.h>
 #include <LibRHI/Vulkan/VkCommandBuffer.h>
 #include <LibRHI/Vulkan/VkPipeline.h>
 
@@ -64,10 +65,14 @@ void VkCommandBuffer::begin_render_pass(RenderPass const* render_pass, RenderTar
 
 void VkCommandBuffer::end_render_pass() const
 {
-    // TODO: IMPORTANT: Test draw call
-    vkCmdDraw(m_handle, 3, 1, 0, 0);
-
     vkCmdEndRenderPass(m_handle);
+}
+
+void VkCommandBuffer::bind_vertex_buffer(Buffer const* vertex_buffer) const
+{
+    auto* vk_vertex_buffer = to_vk(vertex_buffer)->handle();
+    VkDeviceSize const offset = 0;
+    vkCmdBindVertexBuffers(m_handle, 0, 1, &vk_vertex_buffer, &offset);
 }
 
 void VkCommandBuffer::bind_pipeline(Pipeline const* pipeline) const
@@ -75,22 +80,27 @@ void VkCommandBuffer::bind_pipeline(Pipeline const* pipeline) const
     vkCmdBindPipeline(m_handle, VK_PIPELINE_BIND_POINT_GRAPHICS, to_vk(pipeline)->handle());
 }
 
+void VkCommandBuffer::draw(u32 vertex_count, u32 instance_count, u32 first_vertex, u32 first_instance) const
+{
+    vkCmdDraw(m_handle, vertex_count, instance_count, first_vertex, first_instance);
+}
+
 void VkCommandBuffer::set_viewport(u32 x, u32 y, u32 width, u32 height) const
 {
-    VkViewport viewport {
+    VkViewport const viewport {
         .x = static_cast<f32>(x),
         .y = static_cast<f32>(y),
         .width = static_cast<f32>(width),
         .height = static_cast<f32>(height),
-        .minDepth = 0.0f,
-        .maxDepth = 1.0f
+        .minDepth = 0.0F,
+        .maxDepth = 1.0F
     };
     vkCmdSetViewport(m_handle, 0, 1, &viewport);
 }
 
 void VkCommandBuffer::set_scissor(u32 x, u32 y, u32 width, u32 height) const
 {
-    VkRect2D scissor {
+    VkRect2D const scissor {
         .offset = { static_cast<i32>(x), static_cast<i32>(y) },
         .extent = { width, height }
     };
