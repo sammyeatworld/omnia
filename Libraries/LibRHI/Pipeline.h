@@ -83,11 +83,10 @@ public:
         Depth depth {};
         RenderPass const* render_pass {};
         VertexBinding vertex_binding {};
+        ResourceLayout const* resource_layout {};
     };
 
     virtual ~Pipeline() = default;
-
-    virtual void bind(CommandBuffer const* cmd) const = 0;
 protected:
     Pipeline() = default;
 };

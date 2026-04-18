@@ -25,7 +25,7 @@ public:
     ~VkPipeline() override;
 
     auto handle() const -> ::VkPipeline;
-    void bind(CommandBuffer const* command_buffer) const override;
+    auto layout() const -> VkPipelineLayout;
 private:
     VkPipeline() = default;
 private:

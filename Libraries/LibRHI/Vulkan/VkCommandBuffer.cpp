@@ -4,11 +4,12 @@
  * SPDX-License-Identifier: BSD-2-Clause
  */
 
+#include <cassert>
 #include <format>
 
 #include <LibRHI/Vulkan/VkBuffer.h>
 #include <LibRHI/Vulkan/VkCommandBuffer.h>
-#include <LibRHI/Vulkan/VkPipeline.h>
+#include <LibRHI/Vulkan/VkResourceSet.h>
 
 namespace RHI {
 
@@ -68,16 +69,27 @@ void VkCommandBuffer::end_render_pass() const
     vkCmdEndRenderPass(m_handle);
 }
 
+void VkCommandBuffer::bind_pipeline(Pipeline const* pipeline)
+{
+    auto vk_pipeline = to_vk(pipeline);
+
+    m_current_pipeline_layout = vk_pipeline->layout();
+    vkCmdBindPipeline(m_handle, VK_PIPELINE_BIND_POINT_GRAPHICS, vk_pipeline->handle());
+}
+
+void VkCommandBuffer::bind_resource_set(u32 set_index, ResourceSet const* resource_set) const
+{
+    assert(m_current_pipeline_layout != VK_NULL_HANDLE && "Pipeline must be bound before binding resource sets.");
+
+    auto resource_set_handle = to_vk(resource_set)->handle();
+    vkCmdBindDescriptorSets(m_handle, VK_PIPELINE_BIND_POINT_GRAPHICS, m_current_pipeline_layout, set_index, 1, &resource_set_handle, 0, nullptr);
+}
+
 void VkCommandBuffer::bind_vertex_buffer(Buffer const* vertex_buffer) const
 {
     auto* vk_vertex_buffer = to_vk(vertex_buffer)->handle();
     VkDeviceSize const offset = 0;
     vkCmdBindVertexBuffers(m_handle, 0, 1, &vk_vertex_buffer, &offset);
-}
-
-void VkCommandBuffer::bind_pipeline(Pipeline const* pipeline) const
-{
-    vkCmdBindPipeline(m_handle, VK_PIPELINE_BIND_POINT_GRAPHICS, to_vk(pipeline)->handle());
 }
 
 void VkCommandBuffer::draw(u32 vertex_count, u32 instance_count, u32 first_vertex, u32 first_instance) const

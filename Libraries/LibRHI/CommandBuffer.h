@@ -27,8 +27,9 @@ public:
     virtual void begin_render_pass(RenderPass const* render_pass, RenderTarget const* render_target) const = 0;
     virtual void end_render_pass() const = 0;
 
+    virtual void bind_pipeline(Pipeline const* pipeline) = 0;
+    virtual void bind_resource_set(u32 set_index, ResourceSet const* resource_set) const = 0;
     virtual void bind_vertex_buffer(Buffer const* vertex_buffer) const = 0;
-    virtual void bind_pipeline(Pipeline const* pipeline) const = 0;
 
     virtual void draw(u32 vertex_count, u32 instance_count, u32 first_vertex, u32 first_instance) const = 0;
 

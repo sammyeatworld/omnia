@@ -9,6 +9,7 @@
 #include <LibRHI/Vulkan/VkCommandBuffer.h>
 #include <LibRHI/Vulkan/VkPipeline.h>
 #include <LibRHI/Vulkan/VkRenderPass.h>
+#include <LibRHI/Vulkan/VkResourceLayout.h>
 #include <LibRHI/Vulkan/VkShader.h>
 
 namespace RHI {
@@ -137,7 +138,7 @@ auto VkPipeline::create(Configuration const& config, RHI::VkDevice const* device
         .blendConstants = { 0.0F, 0.0F, 0.0F, 0.0F },
     };
 
-    VkPipelineLayoutCreateInfo const pipeline_layout_create_info {
+    VkPipelineLayoutCreateInfo pipeline_layout_create_info {
         .sType = VK_STRUCTURE_TYPE_PIPELINE_LAYOUT_CREATE_INFO,
         .pNext = nullptr,
         .flags = 0,
@@ -146,6 +147,12 @@ auto VkPipeline::create(Configuration const& config, RHI::VkDevice const* device
         .pushConstantRangeCount = 0,
         .pPushConstantRanges = nullptr,
     };
+
+    if (config.resource_layout != nullptr) {
+        auto* vk_resource_layout = to_vk(config.resource_layout)->handle();
+        pipeline_layout_create_info.setLayoutCount = 1;
+        pipeline_layout_create_info.pSetLayouts = &vk_resource_layout;
+    }
 
     if (auto result = vkCreatePipelineLayout(device->handle(), &pipeline_layout_create_info, nullptr, &pipeline->m_layout); result != VK_SUCCESS) {
         return std::unexpected(std::format("Failed to create vulkan pipeline layout: {}", string_VkResult(result)));
@@ -208,9 +215,9 @@ auto VkPipeline::handle() const -> ::VkPipeline
     return m_handle;
 }
 
-void VkPipeline::bind(CommandBuffer const* command_buffer) const
+auto VkPipeline::layout() const -> VkPipelineLayout
 {
-    to_vk(command_buffer)->bind_pipeline(this);
+    return m_layout;
 }
 
 auto to_vk(Pipeline const* pipeline) -> VkPipeline const*

@@ -23,6 +23,8 @@ public:
     static auto create(Configuration const& config, RHI::VkDevice const* device) -> std::expected<std::unique_ptr<VkResourceLayout>, std::string>;
 
     ~VkResourceLayout() override;
+
+    auto handle() const -> VkDescriptorSetLayout;
 private:
     VkResourceLayout() = default;
 private:

@@ -63,6 +63,12 @@ auto DX12Device::create_resource_layout(ResourceLayout::Configuration const& con
     return {};
 }
 
+auto DX12Device::create_resource_set(ResourceSet::Configuration const& config) -> std::expected<std::unique_ptr<ResourceSet>, std::string>
+{
+    (void)config;
+    return {};
+}
+
 auto DX12Device::create_shader(Shader::Configuration const& config) const -> std::expected<std::unique_ptr<Shader>, std::string>
 {
     return DX12Shader::create(config);

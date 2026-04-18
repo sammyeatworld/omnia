@@ -116,17 +116,17 @@ public:
                 .compare_op = RHI::CompareOp::Less
             },
             .render_pass = sandbox->m_main_render_pass.get(),
-            .vertex_binding =
-                {
-                    .stride = sizeof(Vertex),
-                    .attributes = {
-                        {
-                            .location = 0,
-                            .offset = offsetof(Vertex, position),
-                            .format = RHI::AttributeFormat::Float32Vec3
-                        }
+            .vertex_binding = {
+                .stride = sizeof(Vertex),
+                .attributes = {
+                    {
+                        .location = 0,
+                        .offset = offsetof(Vertex, position),
+                        .format = RHI::AttributeFormat::Float32Vec3
                     }
                 }
+            },
+            .resource_layout = nullptr
         };
         TRY_ASSIGN(sandbox->m_pipeline, sandbox->m_graphics_device->create_pipeline(main_pipeline_config));
 

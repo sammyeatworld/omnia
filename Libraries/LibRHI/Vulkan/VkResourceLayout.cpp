@@ -46,6 +46,11 @@ VkResourceLayout::~VkResourceLayout()
     }
 }
 
+auto VkResourceLayout::handle() const -> VkDescriptorSetLayout
+{
+    return m_handle;
+}
+
 auto to_vk(ResourceLayout const* layout) -> VkResourceLayout const*
 {
     return static_cast<VkResourceLayout const*>(layout);

@@ -25,6 +25,8 @@ public:
 
     ~VkDevice() override;
 
+    auto descriptor_pool() const -> VkDescriptorPool;
+    auto grow_descriptor_pool() -> std::expected<VkDescriptorPool, std::string>;
     auto allocator() const -> VmaAllocator;
     auto handle() const -> ::VkDevice;
     auto surface() const -> VkSurfaceKHR;
@@ -48,6 +50,7 @@ public:
     auto create_render_pass(RenderPass::Configuration const& config) const -> std::expected<std::unique_ptr<RenderPass>, std::string> override;
     auto create_render_target(RenderPass const* render_pass, Texture const* texture) const -> std::expected<std::unique_ptr<RenderTarget>, std::string> override;
     auto create_resource_layout(ResourceLayout::Configuration const& config) const -> std::expected<std::unique_ptr<ResourceLayout>, std::string> override;
+    auto create_resource_set(ResourceSet::Configuration const& config) -> std::expected<std::unique_ptr<ResourceSet>, std::string> override;
     auto create_shader(Shader::Configuration const& config) const -> std::expected<std::unique_ptr<Shader>, std::string> override;
     auto create_swapchain(Swapchain::Configuration const& config) const -> std::expected<std::unique_ptr<Swapchain>, std::string> override;
     auto create_texture(Texture::Configuration const& config) const -> std::expected<std::unique_ptr<Texture>, std::string> override;
@@ -59,11 +62,14 @@ private:
     auto create_logical_device() -> std::expected<void, std::string>;
     auto create_allocator() -> std::expected<void, std::string>;
     auto create_command_pools() -> std::expected<void, std::string>;
+    auto create_descriptor_pool() -> std::expected<void, std::string>;
 private:
     Configuration m_config {};
     VmaAllocator m_allocator {};
     VkInstance m_instance {};
     VkSurfaceKHR m_surface {};
+    std::vector<VkDescriptorPool> m_descriptor_pools;
+    u32 m_descriptor_pool_capacity = 16U;
     VkDebugUtilsMessengerEXT m_debug_messenger {};
 
     RHI::VkPhysicalDevice* m_physical_device {};

@@ -16,6 +16,7 @@
 #include <LibRHI/Vulkan/VkRenderPass.h>
 #include <LibRHI/Vulkan/VkRenderTarget.h>
 #include <LibRHI/Vulkan/VkResourceLayout.h>
+#include <LibRHI/Vulkan/VkResourceSet.h>
 #include <LibRHI/Vulkan/VkShader.h>
 #include <LibRHI/Vulkan/VkSwapchain.h>
 #include <LibRHI/Vulkan/VkTexture.h>
@@ -62,6 +63,9 @@ auto VkDevice::create(Configuration const& config) -> std::expected<std::unique_
         .and_then([&]() {
             return device->create_command_pools();
         })
+        .and_then([&]() {
+            return device->create_descriptor_pool();
+        })
         .transform([&]() {
             return std::move(device);
         });
@@ -69,6 +73,9 @@ auto VkDevice::create(Configuration const& config) -> std::expected<std::unique_
 
 VkDevice::~VkDevice()
 {
+    for (auto* descriptor_pool : m_descriptor_pools) {
+        vkDestroyDescriptorPool(m_logical_device, descriptor_pool, nullptr);
+    }
     if (m_graphics_command_pool != VK_NULL_HANDLE) {
         vkDestroyCommandPool(m_logical_device, m_graphics_command_pool, nullptr);
     }
@@ -91,6 +98,20 @@ VkDevice::~VkDevice()
     if (m_instance != nullptr) {
         vkDestroyInstance(m_instance, nullptr);
     }
+}
+
+auto VkDevice::descriptor_pool() const -> VkDescriptorPool
+{
+    return m_descriptor_pools.back();
+}
+
+auto VkDevice::grow_descriptor_pool() -> std::expected<VkDescriptorPool, std::string>
+{
+    m_descriptor_pool_capacity *= 2;
+    return create_descriptor_pool()
+        .transform([&]() {
+            return m_descriptor_pools.back();
+        });
 }
 
 auto VkDevice::allocator() const -> VmaAllocator
@@ -431,6 +452,30 @@ auto VkDevice::create_command_pools() -> std::expected<void, std::string>
     return {};
 }
 
+auto VkDevice::create_descriptor_pool() -> std::expected<void, std::string>
+{
+    std::vector<::VkDescriptorPoolSize> pool_sizes = {
+        { .type = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, .descriptorCount = m_descriptor_pool_capacity },
+        { .type = VK_DESCRIPTOR_TYPE_SAMPLED_IMAGE, .descriptorCount = m_descriptor_pool_capacity },
+    };
+
+    VkDescriptorPoolCreateInfo const descriptor_pool_create_info = {
+        .sType = VK_STRUCTURE_TYPE_DESCRIPTOR_POOL_CREATE_INFO,
+        .pNext = nullptr,
+        .flags = 0,
+        .maxSets = m_descriptor_pool_capacity,
+        .poolSizeCount = static_cast<u32>(pool_sizes.size()),
+        .pPoolSizes = pool_sizes.data(),
+    };
+
+    ::VkDescriptorPool descriptor_pool {};
+    if (auto result = vkCreateDescriptorPool(m_logical_device, &descriptor_pool_create_info, nullptr, &descriptor_pool); result != VK_SUCCESS) {
+        return std::unexpected(std::format("Failed to create descriptor pool: {}", string_VkResult(result)));
+    }
+    m_descriptor_pools.push_back(descriptor_pool);
+    return {};
+}
+
 auto VkDevice::create_pipeline(Pipeline::Configuration const& config) const -> std::expected<std::unique_ptr<Pipeline>, std::string>
 {
     return VkPipeline::create(config, this);
@@ -449,6 +494,11 @@ auto VkDevice::create_render_target(const RHI::RenderPass* render_pass, const RH
 auto VkDevice::create_resource_layout(ResourceLayout::Configuration const& config) const -> std::expected<std::unique_ptr<ResourceLayout>, std::string>
 {
     return VkResourceLayout::create(config, this);
+}
+
+auto VkDevice::create_resource_set(ResourceSet::Configuration const& config) -> std::expected<std::unique_ptr<ResourceSet>, std::string>
+{
+    return VkResourceSet::create(config, this);
 }
 
 auto VkDevice::create_buffer(Buffer::Configuration const& config) const -> std::expected<std::unique_ptr<Buffer>, std::string>

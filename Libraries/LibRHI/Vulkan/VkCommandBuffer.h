@@ -9,6 +9,7 @@
 #include <Common/Noncopyable.h>
 #include <LibRHI/CommandBuffer.h>
 #include <LibRHI/Vulkan/VkDevice.h>
+#include <LibRHI/Vulkan/VkPipeline.h>
 
 namespace RHI {
 
@@ -30,8 +31,9 @@ public:
     void begin_render_pass(RenderPass const* render_pass, RenderTarget const* render_target) const override;
     void end_render_pass() const override;
 
+    void bind_pipeline(Pipeline const* pipeline) override;
+    void bind_resource_set(u32 set_index, ResourceSet const* resource_set) const override;
     void bind_vertex_buffer(Buffer const* vertex_buffer) const override;
-    void bind_pipeline(Pipeline const* pipeline) const override;
 
     void draw(u32 vertex_count, u32 instance_count, u32 first_vertex, u32 first_instance) const override;
 
@@ -41,6 +43,7 @@ private:
     VkCommandBuffer() = default;
 private:
     ::VkCommandBuffer m_handle {};
+    ::VkPipelineLayout m_current_pipeline_layout {};
 };
 
 auto to_vk(CommandBuffer const* command_buffer) -> VkCommandBuffer const*;
