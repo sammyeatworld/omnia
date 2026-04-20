@@ -32,6 +32,13 @@ VkBuffer::~VkBuffer()
     }
 }
 
+void VkBuffer::set_data(void const* data, u64 size)
+{
+    m_config.data = data;
+    m_config.size = size;
+    auto upload_result = upload_data();
+}
+
 auto VkBuffer::handle() const -> ::VkBuffer
 {
     return m_handle;
@@ -39,29 +46,38 @@ auto VkBuffer::handle() const -> ::VkBuffer
 
 auto VkBuffer::create_buffer() -> std::expected<void, std::string>
 {
-    VkBufferCreateInfo const buffer_create_info {
+    VkBufferCreateInfo buffer_create_info {
         .sType = VK_STRUCTURE_TYPE_BUFFER_CREATE_INFO,
         .pNext = nullptr,
         .flags = 0,
         .size = m_config.size,
-        .usage = to_vk(m_config.usage) | VK_BUFFER_USAGE_TRANSFER_DST_BIT,
+        .usage = to_vk(m_config.usage),
         .sharingMode = VK_SHARING_MODE_EXCLUSIVE,
         .queueFamilyIndexCount = 0,
         .pQueueFamilyIndices = nullptr,
     };
+    if (m_config.usage == BufferUsage::Vertex || m_config.usage == BufferUsage::Index) {
+        buffer_create_info.usage |= VK_BUFFER_USAGE_TRANSFER_DST_BIT;
+    }
 
-    VmaAllocationCreateInfo const allocation_create_info {
+    VmaAllocationCreateInfo allocation_create_info {
         .flags = 0,
         .usage = VMA_MEMORY_USAGE_AUTO,
-        .requiredFlags = VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT,
+        .requiredFlags = 0,
         .preferredFlags = 0,
         .memoryTypeBits = 0,
         .pool = nullptr,
         .pUserData = nullptr,
         .priority = 0.0F,
     };
+    if (m_config.usage == BufferUsage::Vertex || m_config.usage == BufferUsage::Index) {
+        allocation_create_info.requiredFlags = VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT;
+    } else if (m_config.usage == BufferUsage::Uniform) {
+        allocation_create_info.flags = VMA_ALLOCATION_CREATE_HOST_ACCESS_SEQUENTIAL_WRITE_BIT | VMA_ALLOCATION_CREATE_MAPPED_BIT;
+        allocation_create_info.requiredFlags = VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT;
+    }
 
-    if (auto result = vmaCreateBuffer(m_device->allocator(), &buffer_create_info, &allocation_create_info, &m_handle, &m_allocation, nullptr); result != VK_SUCCESS) {
+    if (auto result = vmaCreateBuffer(m_device->allocator(), &buffer_create_info, &allocation_create_info, &m_handle, &m_allocation, &m_allocation_info); result != VK_SUCCESS) {
         return std::unexpected(std::format("Failed to create Vulkan buffer: {}", string_VkResult(result)));
     }
     return {};
@@ -69,6 +85,15 @@ auto VkBuffer::create_buffer() -> std::expected<void, std::string>
 
 auto VkBuffer::upload_data() -> std::expected<void, std::string>
 {
+    if (m_config.data == nullptr || m_config.size == 0) {
+        return {};
+    }
+
+    if (m_config.usage == BufferUsage::Uniform || m_config.usage == BufferUsage::Storage) {
+        std::memcpy(m_allocation_info.pMappedData, m_config.data, m_config.size);
+        return {};
+    }
+
     VkBufferCreateInfo const staging_buffer_create_info {
         .sType = VK_STRUCTURE_TYPE_BUFFER_CREATE_INFO,
         .pNext = nullptr,
@@ -83,7 +108,7 @@ auto VkBuffer::upload_data() -> std::expected<void, std::string>
     VmaAllocationCreateInfo const staging_allocation_create_info {
         .flags = VMA_ALLOCATION_CREATE_MAPPED_BIT | VMA_ALLOCATION_CREATE_HOST_ACCESS_SEQUENTIAL_WRITE_BIT,
         .usage = VMA_MEMORY_USAGE_AUTO,
-        .requiredFlags = 0,
+        .requiredFlags = VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT,
         .preferredFlags = 0,
         .memoryTypeBits = 0,
         .pool = nullptr,

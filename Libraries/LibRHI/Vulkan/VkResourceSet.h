@@ -33,6 +33,7 @@ private:
     VkResourceSet() = default;
 private:
     VkDescriptorSet m_handle {};
+    RHI::VkDevice const* m_device {};
 };
 
 auto to_vk(ResourceSet const* resource_set) -> VkResourceSet const*;

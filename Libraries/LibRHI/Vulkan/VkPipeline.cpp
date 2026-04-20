@@ -148,10 +148,14 @@ auto VkPipeline::create(Configuration const& config, RHI::VkDevice const* device
         .pPushConstantRanges = nullptr,
     };
 
-    if (config.resource_layout != nullptr) {
-        auto* vk_resource_layout = to_vk(config.resource_layout)->handle();
-        pipeline_layout_create_info.setLayoutCount = 1;
-        pipeline_layout_create_info.pSetLayouts = &vk_resource_layout;
+    std::vector<VkDescriptorSetLayout> descriptor_set_layouts;
+    descriptor_set_layouts.reserve(config.resource_layouts.size());
+    for (auto const* resource_layout : config.resource_layouts) {
+        descriptor_set_layouts.push_back(to_vk(resource_layout)->handle());
+    }
+    if (!descriptor_set_layouts.empty()) {
+        pipeline_layout_create_info.setLayoutCount = static_cast<u32>(descriptor_set_layouts.size());
+        pipeline_layout_create_info.pSetLayouts = descriptor_set_layouts.data();
     }
 
     if (auto result = vkCreatePipelineLayout(device->handle(), &pipeline_layout_create_info, nullptr, &pipeline->m_layout); result != VK_SUCCESS) {

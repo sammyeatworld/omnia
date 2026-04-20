@@ -71,7 +71,7 @@ void VkCommandBuffer::end_render_pass() const
 
 void VkCommandBuffer::bind_pipeline(Pipeline const* pipeline)
 {
-    auto vk_pipeline = to_vk(pipeline);
+    auto const* vk_pipeline = to_vk(pipeline);
 
     m_current_pipeline_layout = vk_pipeline->layout();
     vkCmdBindPipeline(m_handle, VK_PIPELINE_BIND_POINT_GRAPHICS, vk_pipeline->handle());
@@ -81,7 +81,7 @@ void VkCommandBuffer::bind_resource_set(u32 set_index, ResourceSet const* resour
 {
     assert(m_current_pipeline_layout != VK_NULL_HANDLE && "Pipeline must be bound before binding resource sets.");
 
-    auto resource_set_handle = to_vk(resource_set)->handle();
+    auto* resource_set_handle = to_vk(resource_set)->handle();
     vkCmdBindDescriptorSets(m_handle, VK_PIPELINE_BIND_POINT_GRAPHICS, m_current_pipeline_layout, set_index, 1, &resource_set_handle, 0, nullptr);
 }
 
@@ -92,9 +92,20 @@ void VkCommandBuffer::bind_vertex_buffer(Buffer const* vertex_buffer) const
     vkCmdBindVertexBuffers(m_handle, 0, 1, &vk_vertex_buffer, &offset);
 }
 
+void VkCommandBuffer::bind_index_buffer(Buffer const* index_buffer) const
+{
+    auto* vk_index_buffer = to_vk(index_buffer)->handle();
+    vkCmdBindIndexBuffer(m_handle, vk_index_buffer, 0, VK_INDEX_TYPE_UINT32);
+}
+
 void VkCommandBuffer::draw(u32 vertex_count, u32 instance_count, u32 first_vertex, u32 first_instance) const
 {
     vkCmdDraw(m_handle, vertex_count, instance_count, first_vertex, first_instance);
+}
+
+void VkCommandBuffer::draw_indexed(u32 index_count, u32 instance_count, u32 first_index, i32 vertex_offset, u32 first_instance) const
+{
+    vkCmdDrawIndexed(m_handle, index_count, instance_count, first_index, vertex_offset, first_instance);
 }
 
 void VkCommandBuffer::set_viewport(u32 x, u32 y, u32 width, u32 height) const

@@ -79,9 +79,10 @@ public:
         };
 
         std::vector<Vertex> const triangle_vertices {
-            { .position = {  0.0F, -0.5F, 1.0F } },
+            { .position = {  0.5F, -0.5F, 1.0F } },
             { .position = {  0.5F,  0.5F, 1.0F } },
-            { .position = { -0.5F,  0.9F, 1.0F } }
+            { .position = { -0.5F,  0.5F, 1.0F } },
+            { .position = { -0.5F, -0.5F, 1.0F } }
         };
 
         RHI::Buffer::Configuration const triangle_vertex_buffer_config {
@@ -89,7 +90,17 @@ public:
             .usage = RHI::BufferUsage::Vertex,
             .data = triangle_vertices.data()
         };
-        TRY_ASSIGN(sandbox->m_triangle_vertex_buffer, sandbox->m_graphics_device->create_buffer(triangle_vertex_buffer_config));
+        TRY_ASSIGN(sandbox->m_quad_vb, sandbox->m_graphics_device->create_buffer(triangle_vertex_buffer_config));
+
+        std::vector<u32> const triangle_indices {
+            0, 1, 2, 0, 2, 3
+        };
+        RHI::Buffer::Configuration const triangle_index_buffer_config {
+            .size = sizeof(u32) * triangle_indices.size(),
+            .usage = RHI::BufferUsage::Index,
+            .data = triangle_indices.data()
+        };
+        TRY_ASSIGN(sandbox->m_quad_ib, sandbox->m_graphics_device->create_buffer(triangle_index_buffer_config));
 
         {
             RHI::Shader::Configuration shader_config;
@@ -102,6 +113,22 @@ public:
             TRY_ASSIGN(shader_config, sandbox->m_import_manager.import<RHI::Shader::Configuration>("Resources/Shaders/BaseObject.vs.glsl"));
             TRY_ASSIGN(sandbox->m_vertex_shader, sandbox->m_graphics_device->create_shader(shader_config));
         }
+
+        RHI::ResourceLayout::Configuration const main_resource_layout_config {
+            .bindings = {
+                {
+                    .binding = 0,
+                    .type = RHI::ResourceType::UniformBuffer,
+                    .stage = RHI::ShaderStage::Vertex
+                }
+            }
+        };
+        TRY_ASSIGN(sandbox->m_main_resource_layout, sandbox->m_graphics_device->create_resource_layout(main_resource_layout_config));
+
+        RHI::ResourceSet::Configuration const main_resource_set_config {
+            .layout = sandbox->m_main_resource_layout.get(),
+        };
+        TRY_ASSIGN(sandbox->m_main_resource_set, sandbox->m_graphics_device->create_resource_set(main_resource_set_config));
 
         RHI::Pipeline::Configuration const main_pipeline_config {
             .vertex_shader = sandbox->m_vertex_shader.get(),
@@ -126,7 +153,9 @@ public:
                     }
                 }
             },
-            .resource_layout = nullptr
+            .resource_layouts = {
+                sandbox->m_main_resource_layout.get()
+            }
         };
         TRY_ASSIGN(sandbox->m_pipeline, sandbox->m_graphics_device->create_pipeline(main_pipeline_config));
 
@@ -203,8 +232,10 @@ public:
                     {
                         cmd->set_viewport(0, 0, m_swapchain->width(), m_swapchain->height());
                         cmd->set_scissor(0, 0, m_swapchain->width(), m_swapchain->height());
-                        cmd->bind_vertex_buffer(m_triangle_vertex_buffer.get());
-                        cmd->draw(3, 1, 0, 0);
+                        cmd->bind_resource_set(0, m_main_resource_set.get());
+                        cmd->bind_vertex_buffer(m_quad_vb.get());
+                        cmd->bind_index_buffer(m_quad_ib.get());
+                        cmd->draw_indexed(6, 1, 0, 0, 0);
                     }
                 }
                 cmd->end_render_pass();
@@ -229,7 +260,10 @@ private:
     Asset::ImportManager m_import_manager;
     std::unique_ptr<RHI::Shader> m_vertex_shader;
     std::unique_ptr<RHI::Shader> m_fragment_shader;
-    std::unique_ptr<RHI::Buffer> m_triangle_vertex_buffer;
+    std::unique_ptr<RHI::Buffer> m_quad_vb;
+    std::unique_ptr<RHI::Buffer> m_quad_ib;
+    std::unique_ptr<RHI::ResourceLayout> m_main_resource_layout;
+    std::unique_ptr<RHI::ResourceSet> m_main_resource_set;
     bool m_was_window_resized = false;
 };
 

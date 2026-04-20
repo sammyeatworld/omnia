@@ -25,6 +25,7 @@ public:
 
     ~VkBuffer() override;
 
+    void set_data(void const* data, u64 size) override;
     auto handle() const -> ::VkBuffer;
 private:
     VkBuffer() = default;
@@ -36,6 +37,7 @@ private:
     RHI::VkDevice const* m_device {};
     ::VkBuffer m_handle {};
     VmaAllocation m_allocation {};
+    VmaAllocationInfo m_allocation_info {};
 };
 
 auto to_vk(Buffer const* buffer) -> RHI::VkBuffer const*;

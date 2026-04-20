@@ -19,4 +19,10 @@ DX12Buffer::~DX12Buffer()
 {
 }
 
+void DX12Buffer::set_data(void const* data, u64 size)
+{
+    m_config.data = data;
+    m_config.size = size;
+}
+
 }

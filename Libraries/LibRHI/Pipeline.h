@@ -83,7 +83,7 @@ public:
         Depth depth {};
         RenderPass const* render_pass {};
         VertexBinding vertex_binding {};
-        ResourceLayout const* resource_layout {};
+        std::vector<ResourceLayout const*> resource_layouts {};
     };
 
     virtual ~Pipeline() = default;

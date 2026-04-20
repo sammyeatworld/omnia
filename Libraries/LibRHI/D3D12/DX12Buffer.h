@@ -23,6 +23,8 @@ public:
     static auto create(Configuration const& config) -> std::expected<std::unique_ptr<DX12Buffer>, std::string>;
 
     ~DX12Buffer() override;
+
+    void set_data(void const* data, u64 size) override;
 private:
     DX12Buffer() = default;
 private:

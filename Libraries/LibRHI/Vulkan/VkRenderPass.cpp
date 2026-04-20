@@ -60,7 +60,7 @@ void VkRenderPass::begin(CommandBuffer const* command_buffer, RenderTarget const
 
 void VkRenderPass::end(CommandBuffer const* command_buffer) const
 {
-    auto vk_cmd = to_vk(command_buffer);
+    auto const* vk_cmd = to_vk(command_buffer);
 
     vkCmdEndRenderPass(vk_cmd->handle());
 }

@@ -6,6 +6,7 @@
 
 #include <format>
 
+#include <LibRHI/Vulkan/VkBuffer.h>
 #include <LibRHI/Vulkan/VkResourceLayout.h>
 #include <LibRHI/Vulkan/VkResourceSet.h>
 
@@ -14,8 +15,9 @@ namespace RHI {
 auto VkResourceSet::create(ResourceSet::Configuration const& config, RHI::VkDevice* device) -> std::expected<std::unique_ptr<VkResourceSet>, std::string>
 {
     std::unique_ptr<VkResourceSet> resource_set(new VkResourceSet);
+    resource_set->m_device = device;
 
-    auto layout_handle = to_vk(config.layout)->handle();
+    auto* layout_handle = to_vk(config.layout)->handle();
     VkDescriptorSetAllocateInfo descriptor_set_allocate_info {
         .sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_ALLOCATE_INFO,
         .pNext = nullptr,
@@ -50,8 +52,26 @@ auto VkResourceSet::handle() const -> VkDescriptorSet
 
 void VkResourceSet::set_uniform_buffer(u32 binding, Buffer const* buffer)
 {
-    (void)binding;
-    (void)buffer;
+    VkDescriptorBufferInfo const buffer_info {
+        .buffer = to_vk(buffer)->handle(),
+        .offset = 0,
+        .range = VK_WHOLE_SIZE
+    };
+
+    VkWriteDescriptorSet const write_descriptor_set {
+        .sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET,
+        .pNext = nullptr,
+        .dstSet = m_handle,
+        .dstBinding = binding,
+        .dstArrayElement = 0,
+        .descriptorCount = 1,
+        .descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER,
+        .pImageInfo = nullptr,
+        .pBufferInfo = &buffer_info,
+        .pTexelBufferView = nullptr
+    };
+
+    vkUpdateDescriptorSets(m_device->handle(), 1, &write_descriptor_set, 0, nullptr);
 }
 
 void VkResourceSet::set_texture(u32 binding, Texture const* texture)

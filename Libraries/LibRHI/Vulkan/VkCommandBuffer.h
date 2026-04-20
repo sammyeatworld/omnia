@@ -34,8 +34,10 @@ public:
     void bind_pipeline(Pipeline const* pipeline) override;
     void bind_resource_set(u32 set_index, ResourceSet const* resource_set) const override;
     void bind_vertex_buffer(Buffer const* vertex_buffer) const override;
+    void bind_index_buffer(Buffer const* index_buffer) const override;
 
     void draw(u32 vertex_count, u32 instance_count, u32 first_vertex, u32 first_instance) const override;
+    void draw_indexed(u32 index_count, u32 instance_count, u32 first_index, i32 vertex_offset, u32 first_instance) const override;
 
     void set_viewport(u32 x, u32 y, u32 width, u32 height) const override;
     void set_scissor(u32 x, u32 y, u32 width, u32 height) const override;
