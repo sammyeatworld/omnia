@@ -12,10 +12,10 @@
 
 namespace RHI {
 
+// TODO: Split texture and sampler
 enum class ResourceType : u8 {
     UniformBuffer = 0,
-    Texture,
-    Sampler
+    Texture
 };
 
 class ResourceLayout {

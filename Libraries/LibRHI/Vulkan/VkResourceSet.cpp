@@ -9,6 +9,7 @@
 #include <LibRHI/Vulkan/VkBuffer.h>
 #include <LibRHI/Vulkan/VkResourceLayout.h>
 #include <LibRHI/Vulkan/VkResourceSet.h>
+#include <LibRHI/Vulkan/VkTexture.h>
 
 namespace RHI {
 
@@ -76,8 +77,27 @@ void VkResourceSet::set_uniform_buffer(u32 binding, Buffer const* buffer)
 
 void VkResourceSet::set_texture(u32 binding, Texture const* texture)
 {
-    (void)binding;
-    (void)texture;
+    auto vk_texture = to_vk(texture);
+    VkDescriptorImageInfo const image_info {
+        .sampler = vk_texture->sampler(),
+        .imageView = vk_texture->image_view(),
+        .imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL
+    };
+
+    VkWriteDescriptorSet const write_descriptor_set {
+        .sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET,
+        .pNext = nullptr,
+        .dstSet = m_handle,
+        .dstBinding = binding,
+        .dstArrayElement = 0,
+        .descriptorCount = 1,
+        .descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER,
+        .pImageInfo = &image_info,
+        .pBufferInfo = nullptr,
+        .pTexelBufferView = nullptr
+    };
+
+    vkUpdateDescriptorSets(m_device->handle(), 1, &write_descriptor_set, 0, nullptr);
 }
 
 auto to_vk(ResourceSet const* resource_set) -> VkResourceSet const*

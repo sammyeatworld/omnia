@@ -13,6 +13,7 @@
 #include <LibRHI/Device.h>
 #include <LibRHI/Vulkan/VkCommon.h>
 #include <LibRHI/Vulkan/VkPhysicalDevice.h>
+#include <LibRHI/Vulkan/VkCommandBuffer.h>
 
 namespace RHI {
 
@@ -31,6 +32,9 @@ public:
     auto handle() const -> ::VkDevice;
     auto surface() const -> VkSurfaceKHR;
 
+    void submit_graphics(RHI::VkCommandBuffer const& command_buffer) const;
+    auto graphics_command_buffer() const -> RHI::VkCommandBuffer const&;
+
     auto graphics_queue() const -> VkQueue;
     auto present_queue() const -> VkQueue;
     auto transfer_queue() const -> VkQueue;
@@ -41,9 +45,6 @@ public:
     auto selected_physical_device() const -> VkPhysicalDevice const*;
     auto physical_devices() const -> std::vector<std::string_view> override;
     auto select_physical_device(std::string_view name) -> bool override;
-
-    auto begin_single_transfer_command() const -> std::expected<::VkCommandBuffer, std::string>;
-    void end_single_transfer_command(::VkCommandBuffer command_buffer) const;
 
     auto create_buffer(Buffer::Configuration const& config) const -> std::expected<std::unique_ptr<Buffer>, std::string> override;
     auto create_pipeline(Pipeline::Configuration const& config) const -> std::expected<std::unique_ptr<Pipeline>, std::string> override;
@@ -81,6 +82,7 @@ private:
     VkQueue m_transfer_queue {};
     VkCommandPool m_graphics_command_pool {};
     VkCommandPool m_transfer_command_pool {};
+    RHI::VkCommandBuffer m_graphics_command_buffer {};
 };
 
 }

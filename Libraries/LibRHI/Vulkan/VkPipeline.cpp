@@ -6,7 +6,7 @@
 
 #include <format>
 
-#include <LibRHI/Vulkan/VkCommandBuffer.h>
+#include <LibRHI/Vulkan/VkDevice.h>
 #include <LibRHI/Vulkan/VkPipeline.h>
 #include <LibRHI/Vulkan/VkRenderPass.h>
 #include <LibRHI/Vulkan/VkResourceLayout.h>

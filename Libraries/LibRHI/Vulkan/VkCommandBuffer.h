@@ -8,17 +8,19 @@
 
 #include <Common/Noncopyable.h>
 #include <LibRHI/CommandBuffer.h>
-#include <LibRHI/Vulkan/VkDevice.h>
 #include <LibRHI/Vulkan/VkPipeline.h>
 
 namespace RHI {
 
+class VkDevice;
+
 class VkCommandBuffer final : public CommandBuffer {
     OA_MAKE_NONCOPYABLE(VkCommandBuffer);
+    OA_MAKE_DEFAULT_CONSTRUCTIBLE(VkCommandBuffer);
     OA_MAKE_DEFAULT_MOVABLE(VkCommandBuffer);
 
 public:
-    ~VkCommandBuffer() override;
+    ~VkCommandBuffer() override = default;
 
     static auto create(VkCommandPool command_pool, RHI::VkDevice const* device) -> std::expected<VkCommandBuffer, std::string>;
 
@@ -26,7 +28,10 @@ public:
     void reset() const override;
 
     void begin() const override;
+    void begin(VkCommandBufferUsageFlags usage) const;
     void end() const override;
+
+    void transition_image_layout(VkImage image, VkImageLayout old_layout, VkImageLayout new_layout) const;
 
     void begin_render_pass(RenderPass const* render_pass, RenderTarget const* render_target) const override;
     void end_render_pass() const override;
@@ -41,8 +46,6 @@ public:
 
     void set_viewport(u32 x, u32 y, u32 width, u32 height) const override;
     void set_scissor(u32 x, u32 y, u32 width, u32 height) const override;
-private:
-    VkCommandBuffer() = default;
 private:
     ::VkCommandBuffer m_handle {};
     ::VkPipelineLayout m_current_pipeline_layout {};

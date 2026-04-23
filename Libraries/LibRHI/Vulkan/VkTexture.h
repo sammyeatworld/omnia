@@ -18,7 +18,7 @@ namespace RHI {
 
 class VkTexture final : public Texture {
     OA_MAKE_NONCOPYABLE(VkTexture);
-    OA_MAKE_DEFAULT_MOVABLE(VkTexture);
+    OA_MAKE_NONMOVABLE(VkTexture);
 
 public:
     static auto create_owned(Configuration const& config, RHI::VkDevice const* device) -> std::expected<std::unique_ptr<VkTexture>, std::string>;
@@ -29,6 +29,7 @@ public:
     auto config() const -> Configuration const& override;
     auto image() const -> VkImage;
     auto image_view() const -> VkImageView;
+    auto sampler() const -> VkSampler;
 private:
     VkTexture() = default;
 private:
@@ -36,6 +37,7 @@ private:
     RHI::VkDevice const* m_device {};
     VkImage m_image {};
     VkImageView m_image_view {};
+    VkSampler m_sampler {};
     VmaAllocation m_allocation {};
     bool m_owned = false;
 };

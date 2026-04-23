@@ -7,6 +7,7 @@
 #include <Common/Types.h>
 #include <LibAsset/ImportManager.h>
 #include <LibAsset/ShaderImporter.h>
+#include <LibAsset/TextureImporter.h>
 #include <LibRHI/Device.h>
 #include <LibUI/Platform/Event.h>
 #include <LibUI/Platform/Window.h>
@@ -31,6 +32,7 @@ public:
         std::unique_ptr<Sandbox> sandbox(new Sandbox);
 
         sandbox->m_import_manager.register_importer(std::make_shared<Asset::ShaderImporter>());
+        sandbox->m_import_manager.register_importer(std::make_shared<Asset::TextureImporter>());
 
         UI::Window::Configuration const window_config {
             .title = "Omnia Sandbox",
@@ -76,13 +78,14 @@ public:
 
         struct Vertex {
             Math::Vec3f position;
+            Math::Vec2f tex_coords;
         };
 
         std::vector<Vertex> const triangle_vertices {
-            { .position = {  0.5F, -0.5F, 1.0F } },
-            { .position = {  0.5F,  0.5F, 1.0F } },
-            { .position = { -0.5F,  0.5F, 1.0F } },
-            { .position = { -0.5F, -0.5F, 1.0F } }
+            { .position = {  0.5F, -0.5F, 1.0F }, .tex_coords = { 1.0F, 0.0F } },
+            { .position = {  0.5F,  0.5F, 1.0F }, .tex_coords = { 1.0F, 1.0F } },
+            { .position = { -0.5F,  0.5F, 1.0F }, .tex_coords = { 0.0F, 1.0F } },
+            { .position = { -0.5F, -0.5F, 1.0F }, .tex_coords = { 0.0F, 0.0F } }
         };
 
         RHI::Buffer::Configuration const triangle_vertex_buffer_config {
@@ -114,21 +117,26 @@ public:
             TRY_ASSIGN(sandbox->m_vertex_shader, sandbox->m_graphics_device->create_shader(shader_config));
         }
 
+        RHI::Texture::Configuration texture_config;
+        TRY_ASSIGN(texture_config, sandbox->m_import_manager.import<RHI::Texture::Configuration>("Resources/Textures/texture.jpg"));
+        TRY_ASSIGN(sandbox->m_texture, sandbox->m_graphics_device->create_texture(texture_config));
+
         RHI::ResourceLayout::Configuration const main_resource_layout_config {
             .bindings = {
                 {
                     .binding = 0,
-                    .type = RHI::ResourceType::UniformBuffer,
-                    .stage = RHI::ShaderStage::Vertex
+                    .type = RHI::ResourceType::Texture,
+                    .stage = RHI::ShaderStage::Fragment
                 }
             }
         };
         TRY_ASSIGN(sandbox->m_main_resource_layout, sandbox->m_graphics_device->create_resource_layout(main_resource_layout_config));
 
-        RHI::ResourceSet::Configuration const main_resource_set_config {
+        RHI::ResourceSet::Configuration resource_set_config {
             .layout = sandbox->m_main_resource_layout.get(),
         };
-        TRY_ASSIGN(sandbox->m_main_resource_set, sandbox->m_graphics_device->create_resource_set(main_resource_set_config));
+        TRY_ASSIGN(sandbox->m_resource_set, sandbox->m_graphics_device->create_resource_set(resource_set_config));
+        sandbox->m_resource_set->set_texture(0, sandbox->m_texture.get());
 
         RHI::Pipeline::Configuration const main_pipeline_config {
             .vertex_shader = sandbox->m_vertex_shader.get(),
@@ -150,6 +158,11 @@ public:
                         .location = 0,
                         .offset = offsetof(Vertex, position),
                         .format = RHI::AttributeFormat::Float32Vec3
+                    },
+                    {
+                        .location = 1,
+                        .offset = offsetof(Vertex, tex_coords),
+                        .format = RHI::AttributeFormat::Float32Vec2
                     }
                 }
             },
@@ -224,7 +237,7 @@ public:
             if (!frame.has_value()) {
                 continue;
             }
-            auto [cmd, image_index] = frame.value();
+            auto [cmd, image_index, frame_index] = frame.value();
             {
                 cmd->begin_render_pass(m_main_render_pass.get(), m_swapchain_render_targets[image_index].get());
                 {
@@ -232,7 +245,7 @@ public:
                     {
                         cmd->set_viewport(0, 0, m_swapchain->width(), m_swapchain->height());
                         cmd->set_scissor(0, 0, m_swapchain->width(), m_swapchain->height());
-                        cmd->bind_resource_set(0, m_main_resource_set.get());
+                        cmd->bind_resource_set(0, m_resource_set.get());
                         cmd->bind_vertex_buffer(m_quad_vb.get());
                         cmd->bind_index_buffer(m_quad_ib.get());
                         cmd->draw_indexed(6, 1, 0, 0, 0);
@@ -263,7 +276,8 @@ private:
     std::unique_ptr<RHI::Buffer> m_quad_vb;
     std::unique_ptr<RHI::Buffer> m_quad_ib;
     std::unique_ptr<RHI::ResourceLayout> m_main_resource_layout;
-    std::unique_ptr<RHI::ResourceSet> m_main_resource_set;
+    std::unique_ptr<RHI::ResourceSet> m_resource_set;
+    std::unique_ptr<RHI::Texture> m_texture;
     bool m_was_window_resized = false;
 };
 

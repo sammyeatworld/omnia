@@ -129,6 +129,31 @@ auto VkDevice::surface() const -> VkSurfaceKHR
     return m_surface;
 }
 
+void VkDevice::submit_graphics(const RHI::VkCommandBuffer& command_buffer) const
+{
+    command_buffer.end();
+    auto handle = command_buffer.handle();
+    VkSubmitInfo const submit_info {
+        .sType = VK_STRUCTURE_TYPE_SUBMIT_INFO,
+        .pNext = nullptr,
+        .waitSemaphoreCount = 0,
+        .pWaitSemaphores = nullptr,
+        .pWaitDstStageMask = nullptr,
+        .commandBufferCount = 1,
+        .pCommandBuffers = &handle,
+        .signalSemaphoreCount = 0,
+        .pSignalSemaphores = nullptr
+    };
+
+    vkQueueSubmit(m_graphics_queue, 1, &submit_info, VK_NULL_HANDLE);
+    vkQueueWaitIdle(m_graphics_queue);
+}
+
+auto VkDevice::graphics_command_buffer() const -> RHI::VkCommandBuffer const&
+{
+    return m_graphics_command_buffer;
+}
+
 auto VkDevice::graphics_queue() const -> VkQueue
 {
     return m_graphics_queue;
@@ -172,56 +197,6 @@ auto VkDevice::select_physical_device(std::string_view name) -> bool
 {
     (void)name;
     return true;
-}
-
-auto VkDevice::begin_single_transfer_command() const -> std::expected<::VkCommandBuffer, std::string>
-{
-    VkCommandBufferAllocateInfo const allocate_info {
-        .sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_ALLOCATE_INFO,
-        .pNext = nullptr,
-        .commandPool = m_transfer_command_pool,
-        .level = VK_COMMAND_BUFFER_LEVEL_PRIMARY,
-        .commandBufferCount = 1
-    };
-
-    ::VkCommandBuffer command_buffer {};
-    if (auto result = vkAllocateCommandBuffers(m_logical_device, &allocate_info, &command_buffer); result != VK_SUCCESS) {
-        return std::unexpected(std::format("Failed to allocate Vulkan command buffer: {}", string_VkResult(result)));
-    }
-
-    VkCommandBufferBeginInfo const begin_info {
-        .sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO,
-        .pNext = nullptr,
-        .flags = VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT,
-        .pInheritanceInfo = nullptr
-    };
-    if (auto result = vkBeginCommandBuffer(command_buffer, &begin_info); result != VK_SUCCESS) {
-        return std::unexpected(std::format("Failed to begin Vulkan command buffer: {}", string_VkResult(result)));
-    }
-
-    return command_buffer;
-}
-
-void VkDevice::end_single_transfer_command(::VkCommandBuffer command_buffer) const
-{
-    vkEndCommandBuffer(command_buffer);
-
-    VkSubmitInfo const submit_info {
-        .sType = VK_STRUCTURE_TYPE_SUBMIT_INFO,
-        .pNext = nullptr,
-        .waitSemaphoreCount = 0,
-        .pWaitSemaphores = nullptr,
-        .pWaitDstStageMask = nullptr,
-        .commandBufferCount = 1,
-        .pCommandBuffers = &command_buffer,
-        .signalSemaphoreCount = 0,
-        .pSignalSemaphores = nullptr
-    };
-
-    vkQueueSubmit(m_transfer_queue, 1, &submit_info, VK_NULL_HANDLE);
-    vkQueueWaitIdle(m_transfer_queue);
-
-    vkFreeCommandBuffers(m_logical_device, m_transfer_command_pool, 1, &command_buffer);
 }
 
 auto VkDevice::create_instance() -> std::expected<void, std::string>
@@ -448,6 +423,12 @@ auto VkDevice::create_command_pools() -> std::expected<void, std::string>
     if (auto result = vkCreateCommandPool(m_logical_device, &graphics_pool_create_info, nullptr, &m_graphics_command_pool); result != VK_SUCCESS) {
         return std::unexpected(std::format("Failed to create Vulkan graphics command pool: {}", string_VkResult(result)));
     }
+
+    auto graphics_command_buffer = VkCommandBuffer::create(m_graphics_command_pool, this);
+    if (!graphics_command_buffer) {
+        return std::unexpected(graphics_command_buffer.error());
+    }
+    m_graphics_command_buffer = std::move(graphics_command_buffer.value());
 
     return {};
 }

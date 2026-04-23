@@ -27,6 +27,7 @@ public:
     struct Frame {
         CommandBuffer* cmd {};
         u32 image_index {};
+        u32 frame_index {};
     };
 
     struct Configuration {

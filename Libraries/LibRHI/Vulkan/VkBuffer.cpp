@@ -7,6 +7,7 @@
 #include <format>
 
 #include <LibRHI/Vulkan/VkBuffer.h>
+#include <LibRHI/Vulkan/VkStagingBuffer.h>
 
 namespace RHI {
 
@@ -94,52 +95,22 @@ auto VkBuffer::upload_data() -> std::expected<void, std::string>
         return {};
     }
 
-    VkBufferCreateInfo const staging_buffer_create_info {
-        .sType = VK_STRUCTURE_TYPE_BUFFER_CREATE_INFO,
-        .pNext = nullptr,
-        .flags = 0,
-        .size = m_config.size,
-        .usage = VK_BUFFER_USAGE_TRANSFER_SRC_BIT,
-        .sharingMode = VK_SHARING_MODE_EXCLUSIVE,
-        .queueFamilyIndexCount = 0,
-        .pQueueFamilyIndices = nullptr,
-    };
-
-    VmaAllocationCreateInfo const staging_allocation_create_info {
-        .flags = VMA_ALLOCATION_CREATE_MAPPED_BIT | VMA_ALLOCATION_CREATE_HOST_ACCESS_SEQUENTIAL_WRITE_BIT,
-        .usage = VMA_MEMORY_USAGE_AUTO,
-        .requiredFlags = VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT,
-        .preferredFlags = 0,
-        .memoryTypeBits = 0,
-        .pool = nullptr,
-        .pUserData = nullptr,
-        .priority = 0.0F,
-    };
-
-    VmaAllocationInfo staging_allocation_info {};
-
-    ::VkBuffer staging_buffer {};
-    VmaAllocation staging_allocation {};
-    if (auto result = vmaCreateBuffer(m_device->allocator(), &staging_buffer_create_info, &staging_allocation_create_info, &staging_buffer, &staging_allocation, &staging_allocation_info); result != VK_SUCCESS) {
-        return std::unexpected(std::format("Failed to create Vulkan staging buffer: {}", string_VkResult(result)));
+    auto staging_buffer = VkStagingBuffer::create(m_device, m_config.size);
+    if (!staging_buffer.has_value()) {
+        return std::unexpected(staging_buffer.error());
     }
-
-    std::memcpy(staging_allocation_info.pMappedData, m_config.data, static_cast<std::size_t>(m_config.size));
-
-    auto cmd = m_device->begin_single_transfer_command();
-    if (!cmd) {
-        vmaDestroyBuffer(m_device->allocator(), staging_buffer, staging_allocation);
-        return std::unexpected(cmd.error());
-    }
+    std::memcpy(staging_buffer->allocation_info().pMappedData, m_config.data, static_cast<std::size_t>(m_config.size));
 
     VkBufferCopy const copy_region {
         .srcOffset = 0,
         .dstOffset = 0,
         .size = m_config.size
     };
-    vkCmdCopyBuffer(cmd.value(), staging_buffer, m_handle, 1, &copy_region);
-    m_device->end_single_transfer_command(cmd.value());
-    vmaDestroyBuffer(m_device->allocator(), staging_buffer, staging_allocation);
+
+    auto& cmd = m_device->graphics_command_buffer();
+    cmd.begin(VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT);
+    vkCmdCopyBuffer(cmd.handle(), staging_buffer->handle(), m_handle, 1, &copy_region);
+    m_device->submit_graphics(cmd);
 
     return {};
 }

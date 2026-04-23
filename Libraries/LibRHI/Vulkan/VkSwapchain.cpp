@@ -116,7 +116,8 @@ auto VkSwapchain::begin_frame() -> std::optional<Frame>
 
     return Frame {
         .cmd = &m_command_buffers[m_current_frame],
-        .image_index = image_index
+        .image_index = image_index,
+        .frame_index = m_current_frame
     };
 }
 

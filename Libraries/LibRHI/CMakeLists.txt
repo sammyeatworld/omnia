@@ -34,6 +34,7 @@ if (LINUX OR WIN32)
             Vulkan/VkResourceLayout.cpp
             Vulkan/VkResourceSet.cpp
             Vulkan/VkShader.cpp
+            Vulkan/VkStagingBuffer.cpp
             Vulkan/VkSwapchain.cpp
             Vulkan/VkTexture.cpp
     )

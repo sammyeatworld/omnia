@@ -63,8 +63,6 @@ auto to_vk(ResourceType type) -> VkDescriptorType
         return VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
     case ResourceType::Texture:
         return VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
-    case ResourceType::Sampler:
-        return VK_DESCRIPTOR_TYPE_SAMPLER;
     }
 }
 

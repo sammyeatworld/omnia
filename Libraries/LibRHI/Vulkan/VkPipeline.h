@@ -11,9 +11,11 @@
 #include <string>
 
 #include <LibRHI/Pipeline.h>
-#include <LibRHI/Vulkan/VkDevice.h>
+#include <LibRHI/Vulkan/VkCommon.h>
 
 namespace RHI {
+
+class VkDevice;
 
 class VkPipeline final : public Pipeline {
     OA_MAKE_NONCOPYABLE(VkPipeline);
