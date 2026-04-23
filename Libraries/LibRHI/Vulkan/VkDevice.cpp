@@ -17,6 +17,7 @@
 #include <LibRHI/Vulkan/VkRenderTarget.h>
 #include <LibRHI/Vulkan/VkResourceLayout.h>
 #include <LibRHI/Vulkan/VkResourceSet.h>
+#include <LibRHI/Vulkan/VkSampler.h>
 #include <LibRHI/Vulkan/VkShader.h>
 #include <LibRHI/Vulkan/VkSwapchain.h>
 #include <LibRHI/Vulkan/VkTexture.h>
@@ -480,6 +481,11 @@ auto VkDevice::create_resource_layout(ResourceLayout::Configuration const& confi
 auto VkDevice::create_resource_set(ResourceSet::Configuration const& config) -> std::expected<std::unique_ptr<ResourceSet>, std::string>
 {
     return VkResourceSet::create(config, this);
+}
+
+auto VkDevice::create_sampler(Sampler::Configuration const& config) const -> std::expected<std::unique_ptr<Sampler>, std::string>
+{
+    return VkSampler::create(config, this);
 }
 
 auto VkDevice::create_buffer(Buffer::Configuration const& config) const -> std::expected<std::unique_ptr<Buffer>, std::string>

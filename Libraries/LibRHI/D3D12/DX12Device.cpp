@@ -69,6 +69,12 @@ auto DX12Device::create_resource_set(ResourceSet::Configuration const& config) -
     return {};
 }
 
+auto DX12Device::create_sampler(Sampler::Configuration const& config) const -> std::expected<std::unique_ptr<Sampler>, std::string>
+{
+    (void)config;
+    return {};
+}
+
 auto DX12Device::create_shader(Shader::Configuration const& config) const -> std::expected<std::unique_ptr<Shader>, std::string>
 {
     return DX12Shader::create(config);

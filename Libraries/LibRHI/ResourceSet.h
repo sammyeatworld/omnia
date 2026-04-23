@@ -23,8 +23,9 @@ public:
 
     virtual ~ResourceSet() = default;
 
-    virtual void set_uniform_buffer(u32 binding, Buffer const* buffer) = 0;
+    virtual void set_sampler(u32 binding, Sampler const* sampler) = 0;
     virtual void set_texture(u32 binding, Texture const* texture) = 0;
+    virtual void set_uniform_buffer(u32 binding, Buffer const* buffer) = 0;
 protected:
     ResourceSet() = default;
 };

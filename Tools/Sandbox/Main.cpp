@@ -127,16 +127,33 @@ public:
                     .binding = 0,
                     .type = RHI::ResourceType::Texture,
                     .stage = RHI::ShaderStage::Fragment
+                },
+                {
+                    .binding = 1,
+                    .type = RHI::ResourceType::Sampler,
+                    .stage = RHI::ShaderStage::Fragment
                 }
             }
         };
         TRY_ASSIGN(sandbox->m_main_resource_layout, sandbox->m_graphics_device->create_resource_layout(main_resource_layout_config));
+
+        RHI::Sampler::Configuration const sampler_config {
+            .mag_filter = RHI::Filter::Linear,
+            .min_filter = RHI::Filter::Linear,
+            .address_mode = {
+                .u = RHI::AddressMode::Repeat,
+                .v = RHI::AddressMode::Repeat,
+                .w = RHI::AddressMode::Repeat
+            }
+        };
+        TRY_ASSIGN(sandbox->m_sampler, sandbox->m_graphics_device->create_sampler(sampler_config));
 
         RHI::ResourceSet::Configuration resource_set_config {
             .layout = sandbox->m_main_resource_layout.get(),
         };
         TRY_ASSIGN(sandbox->m_resource_set, sandbox->m_graphics_device->create_resource_set(resource_set_config));
         sandbox->m_resource_set->set_texture(0, sandbox->m_texture.get());
+        sandbox->m_resource_set->set_sampler(1, sandbox->m_sampler.get());
 
         RHI::Pipeline::Configuration const main_pipeline_config {
             .vertex_shader = sandbox->m_vertex_shader.get(),
@@ -278,6 +295,7 @@ private:
     std::unique_ptr<RHI::ResourceLayout> m_main_resource_layout;
     std::unique_ptr<RHI::ResourceSet> m_resource_set;
     std::unique_ptr<RHI::Texture> m_texture;
+    std::unique_ptr<RHI::Sampler> m_sampler;
     bool m_was_window_resized = false;
 };
 

@@ -29,7 +29,6 @@ public:
     auto config() const -> Configuration const& override;
     auto image() const -> VkImage;
     auto image_view() const -> VkImageView;
-    auto sampler() const -> VkSampler;
 private:
     VkTexture() = default;
 private:
@@ -37,7 +36,6 @@ private:
     RHI::VkDevice const* m_device {};
     VkImage m_image {};
     VkImageView m_image_view {};
-    VkSampler m_sampler {};
     VmaAllocation m_allocation {};
     bool m_owned = false;
 };

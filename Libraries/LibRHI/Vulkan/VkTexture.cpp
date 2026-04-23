@@ -98,30 +98,6 @@ auto VkTexture::create_owned(Configuration const& config, const RHI::VkDevice* d
         return std::unexpected(std::format("Failed to create Vulkan image view: {}", string_VkResult(result)));
     }
 
-    VkSamplerCreateInfo const sampler_create_info {
-        .sType = VK_STRUCTURE_TYPE_SAMPLER_CREATE_INFO,
-        .pNext = nullptr,
-        .flags = 0,
-        .magFilter = VK_FILTER_LINEAR,
-        .minFilter = VK_FILTER_LINEAR,
-        .mipmapMode = VK_SAMPLER_MIPMAP_MODE_LINEAR,
-        .addressModeU = VK_SAMPLER_ADDRESS_MODE_REPEAT,
-        .addressModeV = VK_SAMPLER_ADDRESS_MODE_REPEAT,
-        .addressModeW = VK_SAMPLER_ADDRESS_MODE_REPEAT,
-        .mipLodBias = 0.0F,
-        .anisotropyEnable = VK_FALSE,
-        .maxAnisotropy = 1.0F,
-        .compareEnable = VK_FALSE,
-        .compareOp = VK_COMPARE_OP_ALWAYS,
-        .minLod = 0.0F,
-        .maxLod = 0.0F,
-        .borderColor = VK_BORDER_COLOR_INT_OPAQUE_BLACK,
-        .unnormalizedCoordinates = VK_FALSE
-    };
-    if (auto result = vkCreateSampler(device->handle(), &sampler_create_info, nullptr, &texture->m_sampler); result != VK_SUCCESS) {
-        return std::unexpected(std::format("Failed to create Vulkan sampler: {}", string_VkResult(result)));
-    }
-
     return texture;
 }
 
@@ -137,9 +113,6 @@ auto VkTexture::create_borrowed(Configuration const& config, const RHI::VkDevice
 
 VkTexture::~VkTexture()
 {
-    if (m_sampler != VK_NULL_HANDLE) {
-        vkDestroySampler(m_device->handle(), m_sampler, nullptr);
-    }
     if (m_owned && m_image != VK_NULL_HANDLE && m_allocation != VK_NULL_HANDLE) {
         vmaDestroyImage(m_device->allocator(), m_image, m_allocation);
     }
@@ -161,11 +134,6 @@ auto VkTexture::image() const -> VkImage
 auto VkTexture::image_view() const -> VkImageView
 {
     return m_image_view;
-}
-
-auto VkTexture::sampler() const -> VkSampler
-{
-    return m_sampler;
 }
 
 auto to_rhi(VkFormat format) -> TextureFormat

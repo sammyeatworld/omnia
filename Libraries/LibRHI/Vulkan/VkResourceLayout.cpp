@@ -59,10 +59,12 @@ auto to_vk(ResourceLayout const* layout) -> VkResourceLayout const*
 auto to_vk(ResourceType type) -> VkDescriptorType
 {
     switch (type) {
+    case ResourceType::Sampler:
+        return VK_DESCRIPTOR_TYPE_SAMPLER;
+    case ResourceType::Texture:
+        return VK_DESCRIPTOR_TYPE_SAMPLED_IMAGE;
     case ResourceType::UniformBuffer:
         return VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
-    case ResourceType::Texture:
-        return VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
     }
 }
 

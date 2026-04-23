@@ -16,6 +16,7 @@ class RenderPass;
 class RenderTarget;
 class ResourceLayout;
 class ResourceSet;
+class Sampler;
 class Shader;
 class Swapchain;
 class Texture;

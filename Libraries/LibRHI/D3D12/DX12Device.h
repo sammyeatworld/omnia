@@ -29,6 +29,7 @@ public:
     auto create_render_target(RenderPass const* render_pass, Texture const* texture) const -> std::expected<std::unique_ptr<RenderTarget>, std::string> override;
     auto create_resource_layout(ResourceLayout::Configuration const& config) const -> std::expected<std::unique_ptr<ResourceLayout>, std::string> override;
     auto create_resource_set(ResourceSet::Configuration const& config) -> std::expected<std::unique_ptr<ResourceSet>, std::string> override;
+    auto create_sampler(Sampler::Configuration const& config) const -> std::expected<std::unique_ptr<Sampler>, std::string> override;
     auto create_shader(Shader::Configuration const& config) const -> std::expected<std::unique_ptr<Shader>, std::string> override;
     auto create_swapchain(Swapchain::Configuration const& config) const -> std::expected<std::unique_ptr<Swapchain>, std::string> override;
     auto create_texture(Texture::Configuration const& config) const -> std::expected<std::unique_ptr<Texture>, std::string> override;

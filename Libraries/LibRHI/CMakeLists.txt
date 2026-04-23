@@ -33,6 +33,7 @@ if (LINUX OR WIN32)
             Vulkan/VkRenderTarget.cpp
             Vulkan/VkResourceLayout.cpp
             Vulkan/VkResourceSet.cpp
+            Vulkan/VkSampler.cpp
             Vulkan/VkShader.cpp
             Vulkan/VkStagingBuffer.cpp
             Vulkan/VkSwapchain.cpp

@@ -16,6 +16,7 @@
 #include <LibRHI/RenderTarget.h>
 #include <LibRHI/ResourceLayout.h>
 #include <LibRHI/ResourceSet.h>
+#include <LibRHI/Sampler.h>
 #include <LibRHI/Shader.h>
 #include <LibRHI/Swapchain.h>
 #include <LibRHI/Texture.h>
@@ -58,6 +59,7 @@ public:
     virtual auto create_render_target(RenderPass const* render_pass, Texture const* texture) const -> std::expected<std::unique_ptr<RenderTarget>, std::string> = 0;
     virtual auto create_resource_layout(ResourceLayout::Configuration const& config) const -> std::expected<std::unique_ptr<ResourceLayout>, std::string> = 0;
     virtual auto create_resource_set(ResourceSet::Configuration const& config) -> std::expected<std::unique_ptr<ResourceSet>, std::string> = 0;
+    virtual auto create_sampler(Sampler::Configuration const& config) const -> std::expected<std::unique_ptr<Sampler>, std::string> = 0;
     virtual auto create_shader(Shader::Configuration const& config) const -> std::expected<std::unique_ptr<Shader>, std::string> = 0;
     virtual auto create_swapchain(Swapchain::Configuration const& config) const -> std::expected<std::unique_ptr<Swapchain>, std::string> = 0;
     virtual auto create_texture(Texture::Configuration const& config) const -> std::expected<std::unique_ptr<Texture>, std::string> = 0;
