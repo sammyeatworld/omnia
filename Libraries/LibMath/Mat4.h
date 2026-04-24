@@ -73,6 +73,30 @@ public:
         result[15] = 0;
         return result;
     }
+
+    static constexpr auto look_at(Vec3<T> const& eye, Vec3<T> const& look_at, Vec3<T> const& up) -> Mat4
+    {
+        auto const up_normalized = Vec3f::normalize(up);
+        auto const f = Vec3f::normalize(look_at - eye);
+        auto const l = Vec3f::normalize(Vec3f::cross(f, up_normalized));
+        auto const u = Vec3f::normalize(Vec3f::cross(l, f));
+
+        Mat4 result {};
+        result[0] = l.x;
+        result[4] = l.y;
+        result[8] = l.z;
+        result[1] = u.x;
+        result[5] = u.y;
+        result[9] = u.z;
+        result[2] = -f.x;
+        result[6] = -f.y;
+        result[10] = -f.z;
+        result[12] = -Vec3f::dot(l, eye);
+        result[13] = -Vec3f::dot(u, eye);
+        result[14] = Vec3f::dot(f, eye);
+        result[15] = 1.0f;
+        return result;
+    }
 private:
     std::array<T, 16> m_elements {};
 };
