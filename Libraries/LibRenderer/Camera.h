@@ -35,8 +35,6 @@ public:
     struct Configuration {
         ProjectionType projection_type {};
         Math::Vec3f position {};
-        Math::Vec3f look_at {};
-        Math::Vec3f up {};
         union {
             PerspectiveConfiguration perspective;
             OrthographicConfiguration orthographic;
@@ -48,12 +46,18 @@ public:
     auto projection() const -> Math::Mat4f;
     auto view() const -> Math::Mat4f;
 
+    auto forward() const -> Math::Vec3f;
+    auto right() const -> Math::Vec3f;
+    auto up() const -> Math::Vec3f;
+
+    void rotate(f32 pitch_degrees, f32 yaw_degrees, f32 roll_degrees);
     void translate(Math::Vec3f const& translation);
     void set_aspect_ratio(f32 aspect_ratio);
 private:
     Configuration m_config {};
-    Math::Mat4f m_projection {};
-    Math::Mat4f m_view {};
+    Math::Quatf m_orientation;
+    Math::Mat4f m_projection;
+    Math::Mat4f m_view;
 };
 
 }

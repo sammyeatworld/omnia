@@ -66,8 +66,6 @@ public:
         Renderer::Camera::Configuration const camera_config {
             .projection_type = Renderer::ProjectionType::Perspective,
             .position = { 0.0F, 0.0F, 0.0F },
-            .look_at = { 0.0F, 0.0F, -1.0F },
-            .up = { 0.0F, 1.0F, 0.0F },
             .perspective = {
                 .aspect_ratio = static_cast<f32>(swapchain_config.width) / static_cast<f32>(swapchain_config.height),
                 .field_of_view_degrees = 90.0F,
@@ -223,12 +221,15 @@ public:
         };
         TRY_ASSIGN(sandbox->m_pipeline, sandbox->m_graphics_device->create_pipeline(main_pipeline_config));
 
-        sandbox->m_window->event_dispatcher().register_listener<UI::WindowCloseEvent>([](UI::WindowCloseEvent const&) {
-            std::println("Window close event received, exiting...");
-            return true;
-        });
+        sandbox->m_window->event_dispatcher().register_listener<UI::MouseDeltaEvent>(std::bind_front(&Sandbox::on_mouse_delta, sandbox.get()));
         sandbox->m_window->event_dispatcher().register_listener<UI::WindowResizeEvent>(std::bind_front(&Sandbox::on_resize, sandbox.get()));
         return sandbox;
+    }
+
+    auto on_mouse_delta(UI::MouseDeltaEvent const& event) -> bool
+    {
+        m_camera.rotate(static_cast<f32>(event.dy) * 0.1F, static_cast<f32>(-event.dx) * 0.1F, 0.0F);
+        return true;
     }
 
     auto on_resize([[maybe_unused]] UI::WindowResizeEvent const& event) -> bool
@@ -290,22 +291,16 @@ public:
                 continue;
             }
 
-            if (m_window->input().is_key_down(UI::Key::W)) {
-                m_camera.translate({ 0.0F, 0.0F, -0.01F });
-            } else if (m_window->input().is_key_down(UI::Key::S)) {
-                m_camera.translate({ 0.0F, 0.0F, 0.01F });
-            }
+            auto const& input = m_window->input();
 
-            if (m_window->input().is_key_down(UI::Key::A)) {
-                m_camera.translate({ -0.01F, 0.0F, 0.0F });
-            } else if (m_window->input().is_key_down(UI::Key::D)) {
-                m_camera.translate({ 0.01F, 0.0F, 0.0F });
-            }
-
-            if (m_window->input().is_key_down(UI::Key::Space)) {
-                m_camera.translate({ 0.0F, -0.01F, 0.0F });
-            } else if (m_window->input().is_key_down(UI::Key::Control)) {
-                m_camera.translate({ 0.0F, 0.01F, 0.0F });
+            if (input.is_key_down(UI::Key::W) || input.is_key_down(UI::Key::A) || input.is_key_down(UI::Key::S) || input.is_key_down(UI::Key::D)) {
+                Math::Vec3f movement {};
+                movement += m_camera.forward() * (input.is_key_down(UI::Key::W) ? 1.0F : 0.0F);
+                movement -= m_camera.forward() * (input.is_key_down(UI::Key::S) ? 1.0F : 0.0F);
+                movement -= m_camera.right() * (input.is_key_down(UI::Key::A) ? 1.0F : 0.0F);
+                movement += m_camera.right() * (input.is_key_down(UI::Key::D) ? 1.0F : 0.0F);
+                movement.normalize();
+                m_camera.translate(movement * 0.01F);
             }
 
             PerFrameData const per_frame_data {
