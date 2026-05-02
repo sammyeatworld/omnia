@@ -62,6 +62,7 @@ public:
 
     struct Depth {
         bool test_enable;
+        bool write_enable;
         CompareOp compare_op;
     };
 

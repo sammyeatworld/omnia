@@ -67,13 +67,12 @@ void VkRenderPass::end(CommandBuffer const* command_buffer) const
 
 auto VkRenderPass::create_render_pass() -> std::expected<void, std::string>
 {
-    std::vector<VkAttachmentDescription> color_attachment_descriptions;
+    std::vector<VkAttachmentDescription> attachment_descriptions;
     std::vector<VkAttachmentReference> color_attachment_references;
 
-    u32 attachment_index = 0;
     // clang-format off
     for (auto const& color_attachment : m_config.color_attachments) {
-        VkAttachmentDescription color_attachment_description {
+        VkAttachmentDescription const color_attachment_description {
             .flags = 0,
             .format = to_vk(color_attachment.format),
             .samples = VK_SAMPLE_COUNT_1_BIT,
@@ -84,8 +83,8 @@ auto VkRenderPass::create_render_pass() -> std::expected<void, std::string>
             .initialLayout = VK_IMAGE_LAYOUT_UNDEFINED,
             .finalLayout = VK_IMAGE_LAYOUT_PRESENT_SRC_KHR
         };
-        color_attachment_descriptions.push_back(std::move(color_attachment_description));
-        color_attachment_references.emplace_back(attachment_index++, VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL);
+        color_attachment_references.emplace_back(attachment_descriptions.size(), VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL);
+        attachment_descriptions.push_back(color_attachment_description);
 
         VkClearValue const clear_value {
             .color = {
@@ -101,6 +100,38 @@ auto VkRenderPass::create_render_pass() -> std::expected<void, std::string>
     }
     // clang-format on
 
+    VkAttachmentReference depth_attachment_reference {};
+    if (m_config.depth_attachment.has_value()) {
+        auto const& depth_attachment = m_config.depth_attachment.value();
+
+        VkClearValue const clear_value {
+            .color = {
+                .float32 = {
+                    depth_attachment.clear_color.x,
+                    depth_attachment.clear_color.y,
+                    depth_attachment.clear_color.z,
+                    depth_attachment.clear_color.w
+                }
+            }
+        };
+        m_clear_values.push_back(clear_value);
+
+        VkAttachmentDescription const depth_attachment_description {
+            .flags = 0,
+            .format = to_vk(depth_attachment.format),
+            .samples = VK_SAMPLE_COUNT_1_BIT,
+            .loadOp = to_vk(depth_attachment.load_op),
+            .storeOp = to_vk(depth_attachment.store_op),
+            .stencilLoadOp = VK_ATTACHMENT_LOAD_OP_DONT_CARE,
+            .stencilStoreOp = VK_ATTACHMENT_STORE_OP_DONT_CARE,
+            .initialLayout = VK_IMAGE_LAYOUT_UNDEFINED,
+            .finalLayout = VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL
+        };
+        depth_attachment_reference.attachment = static_cast<u32>(attachment_descriptions.size());
+        depth_attachment_reference.layout = VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL;
+        attachment_descriptions.push_back(depth_attachment_description);
+    }
+
     VkSubpassDescription const subpass_description {
         .flags = 0,
         .pipelineBindPoint = VK_PIPELINE_BIND_POINT_GRAPHICS,
@@ -109,7 +140,7 @@ auto VkRenderPass::create_render_pass() -> std::expected<void, std::string>
         .colorAttachmentCount = static_cast<u32>(color_attachment_references.size()),
         .pColorAttachments = color_attachment_references.data(),
         .pResolveAttachments = nullptr,
-        .pDepthStencilAttachment = nullptr,
+        .pDepthStencilAttachment = m_config.depth_attachment.has_value() ? &depth_attachment_reference : nullptr,
         .preserveAttachmentCount = 0,
         .pPreserveAttachments = nullptr
     };
@@ -128,8 +159,8 @@ auto VkRenderPass::create_render_pass() -> std::expected<void, std::string>
         .sType = VK_STRUCTURE_TYPE_RENDER_PASS_CREATE_INFO,
         .pNext = nullptr,
         .flags = 0,
-        .attachmentCount = static_cast<u32>(color_attachment_descriptions.size()),
-        .pAttachments = color_attachment_descriptions.data(),
+        .attachmentCount = static_cast<u32>(attachment_descriptions.size()),
+        .pAttachments = attachment_descriptions.data(),
         .subpassCount = 1,
         .pSubpasses = &subpass_description,
         .dependencyCount = 1,

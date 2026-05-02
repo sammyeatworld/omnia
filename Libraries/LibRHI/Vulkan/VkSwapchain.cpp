@@ -249,6 +249,7 @@ auto VkSwapchain::create_images() -> std::expected<void, std::string>
             .width = m_extent.width,
             .height = m_extent.height,
             .format = to_graphics(m_surface_format.format),
+            .usage = Graphics::TextureUsage::RenderTarget,
             .data = {}
         };
 

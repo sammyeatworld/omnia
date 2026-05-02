@@ -12,27 +12,30 @@
 
 namespace RHI {
 
-auto VkRenderTarget::create(RenderPass const* render_pass, Texture const* texture, RHI::VkDevice const* device) -> std::expected<std::unique_ptr<VkRenderTarget>, std::string>
+auto VkRenderTarget::create(RenderPass const* render_pass, Texture const* texture, Texture const* depth_texture, RHI::VkDevice const* device) -> std::expected<std::unique_ptr<VkRenderTarget>, std::string>
 {
     auto const* vk_render_pass = to_vk(render_pass);
     auto const* vk_texture = to_vk(texture);
-    auto* image_view = vk_texture->image_view();
 
     std::unique_ptr<VkRenderTarget> render_target(new VkRenderTarget);
-    render_target->m_render_pass = render_pass;
-    render_target->m_texture = texture;
     render_target->m_device = device;
     render_target->m_extent = {
         .width = vk_texture->config().width,
         .height = vk_texture->config().height
     };
+
+    std::vector<VkImageView> attachments = { vk_texture->image_view() };
+    if (depth_texture != nullptr) {
+        attachments.push_back(to_vk(depth_texture)->image_view());
+    }
+
     VkFramebufferCreateInfo const framebuffer_create_info {
         .sType = VK_STRUCTURE_TYPE_FRAMEBUFFER_CREATE_INFO,
         .pNext = nullptr,
         .flags = 0,
         .renderPass = vk_render_pass->handle(),
-        .attachmentCount = 1,
-        .pAttachments = &image_view,
+        .attachmentCount = static_cast<u32>(attachments.size()),
+        .pAttachments = attachments.data(),
         .width = vk_texture->config().width,
         .height = vk_texture->config().height,
         .layers = 1

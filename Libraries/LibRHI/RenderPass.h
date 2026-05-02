@@ -6,6 +6,7 @@
 
 #pragma once
 
+#include <optional>
 #include <variant>
 #include <vector>
 
@@ -33,15 +34,16 @@ class RenderPass {
     OA_MAKE_DEFAULT_MOVABLE(RenderPass);
 
 public:
-    struct Configuration {
-        struct Attachment {
-            Graphics::TextureFormat format {};
-            LoadOp load_op {};
-            StoreOp store_op {};
-            Math::Vec4f clear_color;
-        };
+    struct Attachment {
+        Graphics::TextureFormat format {};
+        LoadOp load_op {};
+        StoreOp store_op {};
+        Math::Vec4f clear_color;
+    };
 
+    struct Configuration {
         std::vector<Attachment> color_attachments;
+        std::optional<Attachment> depth_attachment = std::nullopt;
     };
 
     virtual ~RenderPass() = default;

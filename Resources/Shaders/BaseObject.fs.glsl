@@ -1,6 +1,7 @@
 #version 460 core
 
-layout(location = 0) in vec2 in_tex_coords;
+layout(location = 0) in vec2 in_tex_coord;
+layout(location = 1) in vec3 in_normal;
 
 layout(location = 0) out vec4 out_color;
 
@@ -9,5 +10,5 @@ layout(set = 0, binding = 1) uniform sampler u_sampler;
 
 void main()
 {
-    out_color = texture(sampler2D(u_texture, u_sampler), in_tex_coords);
+    out_color = texture(sampler2D(u_texture, u_sampler), in_tex_coord);
 }

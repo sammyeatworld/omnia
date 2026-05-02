@@ -6,15 +6,12 @@
 
 #include <Common/Types.h>
 #include <LibAsset/ImportManager.h>
-#include <LibAsset/ShaderImporter.h>
-#include <LibAsset/TextureImporter.h>
 #include <LibMath/Math.h>
 #include <LibRenderer/Camera.h>
 #include <LibRHI/Device.h>
 #include <LibUI/Platform/Event.h>
 #include <LibUI/Platform/Window.h>
 
-#include <algorithm>
 #include <print>
 
 #define TRY_ASSIGN(lhs, expr)                                  \
@@ -38,9 +35,7 @@ public:
     static auto create() -> std::expected<std::unique_ptr<Sandbox>, std::string>
     {
         std::unique_ptr<Sandbox> sandbox(new Sandbox);
-
-        sandbox->m_import_manager.register_importer(std::make_shared<Asset::ShaderImporter>());
-        sandbox->m_import_manager.register_importer(std::make_shared<Asset::TextureImporter>());
+        sandbox->m_import_manager.register_default_importers();
 
         UI::Window::Configuration const window_config {
             .title = "Omnia Sandbox",
@@ -63,6 +58,9 @@ public:
         };
         TRY_ASSIGN(sandbox->m_swapchain, sandbox->m_graphics_device->create_swapchain(swapchain_config));
 
+        Graphics::ModelConfiguration cube_config;
+        TRY_ASSIGN(sandbox->m_cube_config, sandbox->m_import_manager.import<Graphics::ModelConfiguration>("Resources/Models/cube.obj"));
+
         Renderer::Camera::Configuration const camera_config {
             .projection_type = Renderer::ProjectionType::Perspective,
             .position = { 0.0F, 0.0F, 0.0F },
@@ -83,47 +81,47 @@ public:
                     .store_op = RHI::StoreOp::Store,
                     .clear_color = { 1.0F, 0.0F, 0.0F, 1.0F }
                 }
+            },
+            .depth_attachment = RHI::RenderPass::Attachment {
+                .format = Graphics::TextureFormat::D32_SFLOAT,
+                .load_op = RHI::LoadOp::Clear,
+                .store_op = RHI::StoreOp::DontCare,
+                .clear_color = { 1.0F, 0.0F, 0.0F, 1.0F }
             }
         };
         TRY_ASSIGN(sandbox->m_main_render_pass, sandbox->m_graphics_device->create_render_pass(main_render_pass_config));
 
+        RHI::Texture::Configuration const depth_texture_config {
+            .width = swapchain_config.width,
+            .height = swapchain_config.height,
+            .format = Graphics::TextureFormat::D32_SFLOAT,
+            .usage = Graphics::TextureUsage::DepthStencil,
+            .data = {}
+        };
+        TRY_ASSIGN(sandbox->m_depth_texture, sandbox->m_graphics_device->create_texture(depth_texture_config));
+
         auto const& swapchain_textures = sandbox->m_swapchain->textures();
         for (auto const& swapchain_texture : swapchain_textures) {
-            auto render_target = sandbox->m_graphics_device->create_render_target(sandbox->m_main_render_pass.get(), swapchain_texture.get());
+            auto render_target = sandbox->m_graphics_device->create_render_target(sandbox->m_main_render_pass.get(), swapchain_texture.get(), sandbox->m_depth_texture.get());
             if (!render_target.has_value()) {
                 return std::unexpected(std::move(render_target.error()));
             }
             sandbox->m_swapchain_render_targets.push_back(std::move(render_target.value()));
         }
 
-        struct Vertex {
-            Math::Vec3f position;
-            Math::Vec2f tex_coords;
-        };
-
-        std::vector<Vertex> const triangle_vertices {
-            { .position = {  0.5F, -0.5F, -1.0F }, .tex_coords = { 1.0F, 0.0F } },
-            { .position = {  0.5F,  0.5F, -1.0F }, .tex_coords = { 1.0F, 1.0F } },
-            { .position = { -0.5F,  0.5F, -1.0F }, .tex_coords = { 0.0F, 1.0F } },
-            { .position = { -0.5F, -0.5F, -1.0F }, .tex_coords = { 0.0F, 0.0F } }
-        };
-
-        RHI::Buffer::Configuration const triangle_vertex_buffer_config {
-            .size = sizeof(Vertex) * triangle_vertices.size(),
+        RHI::Buffer::Configuration const cube_vertex_buffer_config {
+            .size = sizeof(Graphics::Vertex) * sandbox->m_cube_config.sub_meshes[0].vertices.size(),
             .usage = RHI::BufferUsage::Vertex,
-            .data = triangle_vertices.data()
+            .data = sandbox->m_cube_config.sub_meshes[0].vertices.data()
         };
-        TRY_ASSIGN(sandbox->m_quad_vb, sandbox->m_graphics_device->create_buffer(triangle_vertex_buffer_config));
+        TRY_ASSIGN(sandbox->m_cube_vb, sandbox->m_graphics_device->create_buffer(cube_vertex_buffer_config));
 
-        std::vector<u32> const triangle_indices {
-            0, 1, 2, 0, 2, 3
-        };
-        RHI::Buffer::Configuration const triangle_index_buffer_config {
-            .size = sizeof(u32) * triangle_indices.size(),
+        RHI::Buffer::Configuration const cube_index_buffer_config {
+            .size = sizeof(Graphics::Index) * sandbox->m_cube_config.sub_meshes[0].indices.size(),
             .usage = RHI::BufferUsage::Index,
-            .data = triangle_indices.data()
+            .data = sandbox->m_cube_config.sub_meshes[0].indices.data()
         };
-        TRY_ASSIGN(sandbox->m_quad_ib, sandbox->m_graphics_device->create_buffer(triangle_index_buffer_config));
+        TRY_ASSIGN(sandbox->m_cube_ib, sandbox->m_graphics_device->create_buffer(cube_index_buffer_config));
 
         {
             RHI::Shader::Configuration shader_config;
@@ -179,7 +177,7 @@ public:
         };
         TRY_ASSIGN(sandbox->m_sampler, sandbox->m_graphics_device->create_sampler(sampler_config));
 
-        RHI::ResourceSet::Configuration resource_set_config {
+        RHI::ResourceSet::Configuration const resource_set_config {
             .layout = sandbox->m_main_resource_layout.get(),
         };
         TRY_ASSIGN(sandbox->m_resource_set, sandbox->m_graphics_device->create_resource_set(resource_set_config));
@@ -191,27 +189,33 @@ public:
             .vertex_shader = sandbox->m_vertex_shader.get(),
             .fragment_shader = sandbox->m_fragment_shader.get(),
             .rasterization = {
-                .cull_mode = RHI::CullMode::None,
+                .cull_mode = RHI::CullMode::Back,
                 .front_face = RHI::FrontFace::CounterClockwise,
                 .polygon_mode = RHI::PolygonMode::Fill
             },
             .depth = {
                 .test_enable = true,
+                .write_enable = true,
                 .compare_op = RHI::CompareOp::Less
             },
             .render_pass = sandbox->m_main_render_pass.get(),
             .vertex_binding = {
-                .stride = sizeof(Vertex),
+                .stride = sizeof(Graphics::Vertex),
                 .attributes = {
                     {
                         .location = 0,
-                        .offset = offsetof(Vertex, position),
+                        .offset = offsetof(Graphics::Vertex, position),
                         .format = RHI::AttributeFormat::Float32Vec3
                     },
                     {
                         .location = 1,
-                        .offset = offsetof(Vertex, tex_coords),
+                        .offset = offsetof(Graphics::Vertex, tex_coord),
                         .format = RHI::AttributeFormat::Float32Vec2
+                    },
+                    {
+                        .location = 2,
+                        .offset = offsetof(Graphics::Vertex, normal),
+                        .format = RHI::AttributeFormat::Float32Vec3
                     }
                 }
             },
@@ -243,6 +247,7 @@ public:
     {
         m_swapchain->wait_idle();
         m_swapchain_render_targets.clear();
+        m_depth_texture.reset();
 
         RHI::Swapchain::Configuration const new_swapchain_config {
             .width = static_cast<u32>(m_window->width()),
@@ -256,16 +261,29 @@ public:
             return false;
         }
 
+        RHI::Texture::Configuration const depth_texture_config {
+            .width = new_swapchain_config.width,
+            .height = new_swapchain_config.height,
+            .format = Graphics::TextureFormat::D32_SFLOAT,
+            .usage = Graphics::TextureUsage::DepthStencil,
+            .data = {}
+        };
+        auto depth_texture_result = m_graphics_device->create_texture(depth_texture_config);
+        if (!depth_texture_result.has_value()) {
+            std::println(stderr, "{}", depth_texture_result.error());
+            return false;
+        }
+        m_depth_texture = std::move(depth_texture_result.value());
+
         auto const& swapchain_textures = m_swapchain->textures();
         for (auto const& swapchain_texture : swapchain_textures) {
-            auto render_target = m_graphics_device->create_render_target(m_main_render_pass.get(), swapchain_texture.get());
+            auto render_target = m_graphics_device->create_render_target(m_main_render_pass.get(), swapchain_texture.get(), m_depth_texture.get());
             if (!render_target.has_value()) {
                 std::println(stderr, "{}", render_target.error());
                 return false;
             }
             m_swapchain_render_targets.push_back(std::move(render_target.value()));
         }
-        std::println("Recreating swapchain...");
         return true;
     }
 
@@ -318,9 +336,9 @@ public:
                         cmd->set_viewport(0, 0, m_swapchain->width(), m_swapchain->height());
                         cmd->set_scissor(0, 0, m_swapchain->width(), m_swapchain->height());
                         cmd->bind_resource_set(0, m_resource_set.get());
-                        cmd->bind_vertex_buffer(m_quad_vb.get());
-                        cmd->bind_index_buffer(m_quad_ib.get());
-                        cmd->draw_indexed(6, 1, 0, 0, 0);
+                        cmd->bind_vertex_buffer(m_cube_vb.get());
+                        cmd->bind_index_buffer(m_cube_ib.get());
+                        cmd->draw_indexed(m_cube_config.sub_meshes[0].indices.size(), 1, 0, 0, 0);
                     }
                 }
                 cmd->end_render_pass();
@@ -331,7 +349,9 @@ public:
 
     ~Sandbox()
     {
-        m_swapchain->wait_idle();
+        if (m_swapchain != nullptr) {
+            m_swapchain->wait_idle();
+        }
     }
 private:
     Sandbox() = default;
@@ -345,14 +365,16 @@ private:
     Asset::ImportManager m_import_manager;
     std::unique_ptr<RHI::Shader> m_vertex_shader;
     std::unique_ptr<RHI::Shader> m_fragment_shader;
-    std::unique_ptr<RHI::Buffer> m_quad_vb;
-    std::unique_ptr<RHI::Buffer> m_quad_ib;
+    std::unique_ptr<RHI::Buffer> m_cube_vb;
+    std::unique_ptr<RHI::Buffer> m_cube_ib;
     std::unique_ptr<RHI::ResourceLayout> m_main_resource_layout;
     std::unique_ptr<RHI::ResourceSet> m_resource_set;
     std::unique_ptr<RHI::Texture> m_texture;
+    std::unique_ptr<RHI::Texture> m_depth_texture;
     std::unique_ptr<RHI::Sampler> m_sampler;
     std::unique_ptr<RHI::Buffer> m_per_frame;
     bool m_was_window_resized = false;
+    Graphics::ModelConfiguration m_cube_config;
     Renderer::Camera m_camera {};
 };
 

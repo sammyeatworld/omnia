@@ -11,18 +11,12 @@
 
 namespace RHI {
 
-auto VkTexture::create_owned(Configuration const& config, const RHI::VkDevice* device) -> std::expected<std::unique_ptr<VkTexture>, std::string>
+auto VkTexture::create_owned(Configuration const& config, RHI::VkDevice const* device) -> std::expected<std::unique_ptr<VkTexture>, std::string>
 {
     std::unique_ptr<VkTexture> texture(new VkTexture);
     texture->m_config = config;
     texture->m_device = device;
     texture->m_owned = true;
-
-    auto staging_buffer = VkStagingBuffer::create(device, config.data.size());
-    if (!staging_buffer) {
-        return std::unexpected(staging_buffer.error());
-    }
-    std::memcpy(staging_buffer->allocation_info().pMappedData, config.data.data(), config.data.size());
 
     VkImageCreateInfo const image_create_info {
         .sType = VK_STRUCTURE_TYPE_IMAGE_CREATE_INFO,
@@ -38,7 +32,7 @@ auto VkTexture::create_owned(Configuration const& config, const RHI::VkDevice* d
         .arrayLayers = 1,
         .samples = VK_SAMPLE_COUNT_1_BIT,
         .tiling = VK_IMAGE_TILING_OPTIMAL,
-        .usage = VK_IMAGE_USAGE_SAMPLED_BIT | VK_IMAGE_USAGE_TRANSFER_DST_BIT,
+        .usage = to_vk(config.usage),
         .sharingMode = VK_SHARING_MODE_EXCLUSIVE,
         .queueFamilyIndexCount = 0,
         .pQueueFamilyIndices = nullptr,
@@ -60,26 +54,6 @@ auto VkTexture::create_owned(Configuration const& config, const RHI::VkDevice* d
         return std::unexpected(std::format("Failed to create Vulkan image: {}", string_VkResult(result)));
     }
 
-    VkBufferImageCopy const copy_region {
-        .bufferOffset = 0,
-        .bufferRowLength = 0,
-        .bufferImageHeight = 0,
-        .imageSubresource = {
-            .aspectMask = VK_IMAGE_ASPECT_COLOR_BIT,
-            .mipLevel = 0,
-            .baseArrayLayer = 0,
-            .layerCount = 1 },
-        .imageOffset = { 0, 0, 0 },
-        .imageExtent = { config.width, config.height, 1 }
-    };
-
-    auto& cmd = device->graphics_command_buffer();
-    cmd.begin(VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT);
-    cmd.transition_image_layout(texture->m_image, VK_IMAGE_LAYOUT_UNDEFINED, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL);
-    vkCmdCopyBufferToImage(cmd.handle(), staging_buffer->handle(), texture->m_image, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, 1, &copy_region);
-    cmd.transition_image_layout(texture->m_image, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL);
-    device->submit_graphics(cmd);
-
     VkImageViewCreateInfo const image_view_create_info {
         .sType = VK_STRUCTURE_TYPE_IMAGE_VIEW_CREATE_INFO,
         .pNext = nullptr,
@@ -92,10 +66,38 @@ auto VkTexture::create_owned(Configuration const& config, const RHI::VkDevice* d
             .g = VK_COMPONENT_SWIZZLE_IDENTITY,
             .b = VK_COMPONENT_SWIZZLE_IDENTITY,
             .a = VK_COMPONENT_SWIZZLE_IDENTITY },
-        .subresourceRange = { .aspectMask = VK_IMAGE_ASPECT_COLOR_BIT, .baseMipLevel = 0, .levelCount = 1, .baseArrayLayer = 0, .layerCount = 1 }
+        .subresourceRange = { .aspectMask = to_vk_aspect(config.format), .baseMipLevel = 0, .levelCount = 1, .baseArrayLayer = 0, .layerCount = 1 }
     };
     if (auto result = vkCreateImageView(device->handle(), &image_view_create_info, nullptr, &texture->m_image_view); result != VK_SUCCESS) {
         return std::unexpected(std::format("Failed to create Vulkan image view: {}", string_VkResult(result)));
+    }
+
+    if (!config.data.empty()) {
+        auto staging_buffer = VkStagingBuffer::create(device, config.data.size());
+        if (!staging_buffer) {
+            return std::unexpected(staging_buffer.error());
+        }
+        std::memcpy(staging_buffer->allocation_info().pMappedData, config.data.data(), config.data.size());
+
+        VkBufferImageCopy const copy_region {
+            .bufferOffset = 0,
+            .bufferRowLength = 0,
+            .bufferImageHeight = 0,
+            .imageSubresource = {
+                .aspectMask = VK_IMAGE_ASPECT_COLOR_BIT,
+                .mipLevel = 0,
+                .baseArrayLayer = 0,
+                .layerCount = 1 },
+            .imageOffset = { 0, 0, 0 },
+            .imageExtent = { config.width, config.height, 1 }
+        };
+
+        auto& cmd = device->graphics_command_buffer();
+        cmd.begin(VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT);
+        cmd.transition_image_layout(texture->m_image, VK_IMAGE_LAYOUT_UNDEFINED, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL);
+        vkCmdCopyBufferToImage(cmd.handle(), staging_buffer->handle(), texture->m_image, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, 1, &copy_region);
+        cmd.transition_image_layout(texture->m_image, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL);
+        device->submit_graphics(cmd);
     }
 
     return texture;
@@ -148,8 +150,41 @@ auto to_graphics(VkFormat format) -> Graphics::TextureFormat
         return B8G8R8A8_UNORM;
     case VK_FORMAT_R8G8B8A8_UNORM:
         return R8G8B8A8_UNORM;
+    case VK_FORMAT_D32_SFLOAT:
+        return D32_SFLOAT;
     default:
         return Unknown;
+    }
+}
+
+auto to_vk_aspect(Graphics::TextureFormat format) -> VkImageAspectFlags
+{
+    switch (format) {
+        using enum Graphics::TextureFormat;
+    case B8G8R8A8_SRGB:
+    case R8G8B8A8_SRGB:
+    case B8G8R8A8_UNORM:
+    case R8G8B8A8_UNORM:
+        return VK_IMAGE_ASPECT_COLOR_BIT;
+    case D32_SFLOAT:
+        return VK_IMAGE_ASPECT_DEPTH_BIT;
+    default:
+        return 0;
+    }
+}
+
+auto to_vk(Graphics::TextureUsage usage) -> VkImageUsageFlags
+{
+    switch (usage) {
+        using enum Graphics::TextureUsage;
+    case Sampled:
+        return VK_IMAGE_USAGE_SAMPLED_BIT | VK_IMAGE_USAGE_TRANSFER_DST_BIT;
+    case RenderTarget:
+        return VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT;
+    case DepthStencil:
+        return VK_IMAGE_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT;
+    default:
+        return 0;
     }
 }
 
@@ -165,6 +200,8 @@ auto to_vk(Graphics::TextureFormat format) -> VkFormat
         return VK_FORMAT_B8G8R8A8_UNORM;
     case R8G8B8A8_UNORM:
         return VK_FORMAT_R8G8B8A8_UNORM;
+    case D32_SFLOAT:
+        return VK_FORMAT_D32_SFLOAT;
     default:
         return VK_FORMAT_UNDEFINED;
     }

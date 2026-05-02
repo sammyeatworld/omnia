@@ -175,6 +175,21 @@ auto VkPipeline::create(Configuration const& config, RHI::VkDevice const* device
         .pDynamicStates = dynamic_states,
     };
 
+    VkPipelineDepthStencilStateCreateInfo const depth_stencil_state_create_info {
+        .sType = VK_STRUCTURE_TYPE_PIPELINE_DEPTH_STENCIL_STATE_CREATE_INFO,
+        .pNext = nullptr,
+        .flags = 0,
+        .depthTestEnable = config.depth.test_enable,
+        .depthWriteEnable = config.depth.write_enable,
+        .depthCompareOp = to_vk(config.depth.compare_op),
+        .depthBoundsTestEnable = VK_FALSE,
+        .stencilTestEnable = VK_FALSE,
+        .front = {},
+        .back = {},
+        .minDepthBounds = 0.0F,
+        .maxDepthBounds = 1.0F,
+    };
+
     VkGraphicsPipelineCreateInfo const pipeline_create_info {
         .sType = VK_STRUCTURE_TYPE_GRAPHICS_PIPELINE_CREATE_INFO,
         .pNext = nullptr,
@@ -187,7 +202,7 @@ auto VkPipeline::create(Configuration const& config, RHI::VkDevice const* device
         .pViewportState = &viewport_state_create_info,
         .pRasterizationState = &rasterization_state_create_info,
         .pMultisampleState = &multisample_state_create_info,
-        .pDepthStencilState = nullptr,
+        .pDepthStencilState = &depth_stencil_state_create_info,
         .pColorBlendState = &color_blend_state_create_info,
         .pDynamicState = &dynamic_state_create_info,
         .layout = pipeline->m_layout,

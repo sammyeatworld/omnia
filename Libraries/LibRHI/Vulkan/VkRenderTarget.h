@@ -20,7 +20,7 @@ class VkRenderTarget final : public RenderTarget {
     OA_MAKE_DEFAULT_MOVABLE(VkRenderTarget);
 
 public:
-    static auto create(RenderPass const* render_pass, Texture const* texture, RHI::VkDevice const* device) -> std::expected<std::unique_ptr<VkRenderTarget>, std::string>;
+    static auto create(RenderPass const* render_pass, Texture const* texture, Texture const* depth_texture, RHI::VkDevice const* device) -> std::expected<std::unique_ptr<VkRenderTarget>, std::string>;
 
     auto framebuffer() const -> VkFramebuffer;
     auto extent() const -> VkExtent2D;
@@ -29,8 +29,6 @@ public:
 private:
     VkRenderTarget() = default;
 private:
-    RenderPass const* m_render_pass {};
-    Texture const* m_texture {};
     RHI::VkDevice const* m_device {};
     VkExtent2D m_extent {};
     VkFramebuffer m_framebuffer {};

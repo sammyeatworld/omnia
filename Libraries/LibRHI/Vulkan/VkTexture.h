@@ -41,6 +41,8 @@ private:
 };
 
 auto to_graphics(VkFormat format) -> Graphics::TextureFormat;
+auto to_vk_aspect(Graphics::TextureFormat format) -> VkImageAspectFlags;
+auto to_vk(Graphics::TextureUsage usage) -> VkImageUsageFlags;
 auto to_vk(Graphics::TextureFormat format) -> VkFormat;
 auto to_vk(Texture const* texture) -> VkTexture const*;
 

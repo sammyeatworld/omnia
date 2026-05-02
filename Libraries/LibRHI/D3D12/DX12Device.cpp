@@ -50,10 +50,11 @@ auto DX12Device::create_render_pass(RenderPass::Configuration const& config) con
     return {};
 }
 
-auto DX12Device::create_render_target(const RHI::RenderPass* render_pass, const RHI::Texture* texture) const -> std::expected<std::unique_ptr<RenderTarget>, std::string>
+auto DX12Device::create_render_target(RenderPass const* render_pass, Texture const* texture, Texture const* depth_texture) const -> std::expected<std::unique_ptr<RenderTarget>, std::string>
 {
     (void)render_pass;
     (void)texture;
+    (void)depth_texture;
     return {};
 }
 
