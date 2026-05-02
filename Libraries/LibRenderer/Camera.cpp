@@ -48,7 +48,7 @@ void Camera::rotate(f32 pitch_degrees, f32 yaw_degrees, f32 roll_degrees)
 {
     auto const pitch_quat = Math::Quatf::from_axis_angle(Math::Vec3f { 1.0F, 0.0F, 0.0F }, DEG_TO_RAD(pitch_degrees));
     auto const yaw_quat = Math::Quatf::from_axis_angle(Math::Vec3f { 0.0F, 1.0F, 0.0F }, DEG_TO_RAD(yaw_degrees));
-    auto const roll_quat = Math::Quatf::from_axis_angle(Math::Vec3f { 0.0F, 0.0F, -1.0F }, DEG_TO_RAD(roll_degrees));
+    auto const roll_quat = Math::Quatf::from_axis_angle(Math::Vec3f { 0.0F, 0.0F, 1.0F }, DEG_TO_RAD(roll_degrees));
 
     m_orientation = (yaw_quat * m_orientation * pitch_quat * roll_quat).normalized();
     m_view = Math::Mat4f::from_quaternion(m_orientation).translate(-m_config.position);
