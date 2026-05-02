@@ -11,6 +11,9 @@
 
 #include <LibAsset/Export.h>
 #include <LibAsset/Importer.h>
+#include <LibAsset/ModelImporter.h>
+#include <LibAsset/ShaderImporter.h>
+#include <LibAsset/TextureImporter.h>
 
 namespace Asset {
 
@@ -18,9 +21,10 @@ class ASSET_API ImportManager final {
 public:
     ImportManager() = default;
 
+    void register_default_importers();
     void register_importer(std::shared_ptr<Importer> importer);
 
-    template <typename T>
+    template<typename T>
     auto import(std::filesystem::path const& path) -> std::expected<T, std::string>
     {
         auto extension = path.extension().string();

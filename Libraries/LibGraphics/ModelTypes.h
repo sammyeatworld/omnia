@@ -14,7 +14,8 @@ namespace Graphics {
 
 struct Vertex {
     Math::Vec3f position;
-    Math::Vec2f tex_coords;
+    Math::Vec2f tex_coord;
+    Math::Vec3f normal;
 };
 
 using Index = u32;

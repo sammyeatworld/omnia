@@ -7,16 +7,16 @@
 #pragma once
 
 #include <LibAsset/Importer.h>
+#include <LibGraphics/ModelTypes.h>
 
 namespace Asset {
-
-struct ModelData : public ImportedData {
-};
 
 class ModelImporter final : public Importer {
 public:
     auto import(std::filesystem::path const& path) -> std::expected<std::any, std::string> override;
     auto supported_extensions() const -> std::vector<std::string> override;
+private:
+    auto import_obj(std::filesystem::path const& path) -> std::expected<std::any, std::string>;
 };
 
 }
