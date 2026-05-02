@@ -13,9 +13,14 @@ layout(set = 0, binding = 2) uniform PerFrameData
     mat4 view;
 } u_per_frame_data;
 
+layout(push_constant) uniform PerObjectData
+{
+    mat4 model;
+} u_per_object_data;
+
 void main()
 {
-    gl_Position = u_per_frame_data.projection * u_per_frame_data.view * vec4(in_position, 1.0);
+    gl_Position = u_per_frame_data.projection * u_per_frame_data.view * u_per_object_data.model * vec4(in_position, 1.0);
     out_tex_coord = in_tex_coord;
     out_normal = in_normal;
 }

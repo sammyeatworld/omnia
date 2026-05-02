@@ -44,6 +44,8 @@ public:
     void draw(u32 vertex_count, u32 instance_count, u32 first_vertex, u32 first_instance) const override;
     void draw_indexed(u32 index_count, u32 instance_count, u32 first_index, i32 vertex_offset, u32 first_instance) const override;
 
+    void push_constants(Pipeline::PushConstant const& push_constant, void const* data) const override;
+
     void set_viewport(u32 x, u32 y, u32 width, u32 height) const override;
     void set_scissor(u32 x, u32 y, u32 width, u32 height) const override;
 private:

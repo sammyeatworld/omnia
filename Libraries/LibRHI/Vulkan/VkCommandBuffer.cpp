@@ -9,6 +9,7 @@
 
 #include <LibRHI/Vulkan/VkBuffer.h>
 #include <LibRHI/Vulkan/VkCommandBuffer.h>
+#include <LibRHI/Vulkan/VkShader.h>
 #include <LibRHI/Vulkan/VkResourceSet.h>
 
 namespace RHI {
@@ -146,6 +147,13 @@ void VkCommandBuffer::draw(u32 vertex_count, u32 instance_count, u32 first_verte
 void VkCommandBuffer::draw_indexed(u32 index_count, u32 instance_count, u32 first_index, i32 vertex_offset, u32 first_instance) const
 {
     vkCmdDrawIndexed(m_handle, index_count, instance_count, first_index, vertex_offset, first_instance);
+}
+
+void VkCommandBuffer::push_constants(Pipeline::PushConstant const& push_constant, void const* data) const
+{
+    assert(m_current_pipeline_layout != VK_NULL_HANDLE && "Pipeline must be bound before pushing constants.");
+
+    vkCmdPushConstants(m_handle, m_current_pipeline_layout, to_vk(push_constant.stage), push_constant.offset, push_constant.size, data);
 }
 
 void VkCommandBuffer::set_viewport(u32 x, u32 y, u32 width, u32 height) const

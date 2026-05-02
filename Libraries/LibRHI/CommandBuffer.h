@@ -8,7 +8,9 @@
 
 #include <Common/Noncopyable.h>
 #include <Common/Types.h>
+#include <LibGraphics/ShaderTypes.h>
 #include <LibRHI/Forward.h>
+#include <LibRHI/Pipeline.h>
 
 namespace RHI {
 
@@ -34,6 +36,8 @@ public:
 
     virtual void draw(u32 vertex_count, u32 instance_count, u32 first_vertex, u32 first_instance) const = 0;
     virtual void draw_indexed(u32 index_count, u32 instance_count, u32 first_index, i32 vertex_offset, u32 first_instance) const = 0;
+
+    virtual void push_constants(Pipeline::PushConstant const& push_constant, void const* data) const = 0;
 
     virtual void set_viewport(u32 x, u32 y, u32 width, u32 height) const = 0;
     virtual void set_scissor(u32 x, u32 y, u32 width, u32 height) const = 0;

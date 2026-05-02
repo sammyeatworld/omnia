@@ -138,14 +138,23 @@ auto VkPipeline::create(Configuration const& config, RHI::VkDevice const* device
         .blendConstants = { 0.0F, 0.0F, 0.0F, 0.0F },
     };
 
+    std::vector<VkPushConstantRange> push_constant_ranges;
+    for (auto const& push_constant : config.push_constants) {
+        push_constant_ranges.push_back({
+            .stageFlags = to_vk(push_constant.stage),
+            .offset = push_constant.offset,
+            .size = push_constant.size,
+        });
+    }
+
     VkPipelineLayoutCreateInfo pipeline_layout_create_info {
         .sType = VK_STRUCTURE_TYPE_PIPELINE_LAYOUT_CREATE_INFO,
         .pNext = nullptr,
         .flags = 0,
         .setLayoutCount = 0,
         .pSetLayouts = nullptr,
-        .pushConstantRangeCount = 0,
-        .pPushConstantRanges = nullptr,
+        .pushConstantRangeCount = static_cast<u32>(push_constant_ranges.size()),
+        .pPushConstantRanges = push_constant_ranges.data()
     };
 
     std::vector<VkDescriptorSetLayout> descriptor_set_layouts;

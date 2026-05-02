@@ -60,6 +60,14 @@ public:
         return result;
     }
 
+    static constexpr auto rotation(T pitch, T yaw, T roll) -> Mat4
+    {
+        auto const qx = Quat<T>::from_axis_angle(Vec3<T>{1, 0, 0}, pitch);
+        auto const qy = Quat<T>::from_axis_angle(Vec3<T>{0, 1, 0}, yaw);
+        auto const qz = Quat<T>::from_axis_angle(Vec3<T>{0, 0, 1}, roll);
+        return from_quaternion(qz * qy * qx);
+    }
+
     static constexpr auto identity() -> Mat4
     {
         return Mat4(1);

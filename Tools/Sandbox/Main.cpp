@@ -185,6 +185,12 @@ public:
         sandbox->m_resource_set->set_sampler(1, sandbox->m_sampler.get());
         sandbox->m_resource_set->set_uniform_buffer(2, sandbox->m_per_frame.get());
 
+        sandbox->m_per_object_push_constant = {
+            .size = sizeof(Math::Mat4f),
+            .offset = 0,
+            .stage = Graphics::ShaderStage::Vertex
+        };
+
         RHI::Pipeline::Configuration const main_pipeline_config {
             .vertex_shader = sandbox->m_vertex_shader.get(),
             .fragment_shader = sandbox->m_fragment_shader.get(),
@@ -221,6 +227,9 @@ public:
             },
             .resource_layouts = {
                 sandbox->m_main_resource_layout.get()
+            },
+            .push_constants = {
+                sandbox->m_per_object_push_constant
             }
         };
         TRY_ASSIGN(sandbox->m_pipeline, sandbox->m_graphics_device->create_pipeline(main_pipeline_config));
@@ -338,6 +347,12 @@ public:
                         cmd->bind_resource_set(0, m_resource_set.get());
                         cmd->bind_vertex_buffer(m_cube_vb.get());
                         cmd->bind_index_buffer(m_cube_ib.get());
+
+                        static f32 rotation_angle = 0.0F;
+                        rotation_angle += 0.0001F;
+                        auto model_matrix = Math::Mat4f::rotation(rotation_angle, 0.0F, 0.0F);
+                        cmd->push_constants(m_per_object_push_constant, &model_matrix);
+
                         cmd->draw_indexed(m_cube_config.sub_meshes[0].indices.size(), 1, 0, 0, 0);
                     }
                 }
@@ -373,6 +388,7 @@ private:
     std::unique_ptr<RHI::Texture> m_depth_texture;
     std::unique_ptr<RHI::Sampler> m_sampler;
     std::unique_ptr<RHI::Buffer> m_per_frame;
+    RHI::Pipeline::PushConstant m_per_object_push_constant {};
     bool m_was_window_resized = false;
     Graphics::ModelConfiguration m_cube_config;
     Renderer::Camera m_camera {};
