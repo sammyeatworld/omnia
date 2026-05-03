@@ -87,6 +87,20 @@ public:
         return rotation(euler_angles.x, euler_angles.y, euler_angles.z);
     }
 
+    static constexpr auto scale(T x, T y, T z) -> Mat4
+    {
+        Mat4 result = identity();
+        result[0] = x;
+        result[5] = y;
+        result[10] = z;
+        return result;
+    }
+
+    static constexpr auto scale(Vec3<T> const& scale) -> Mat4
+    {
+        return scale(scale.x, scale.y, scale.z);
+    }
+
     static constexpr auto identity() -> Mat4
     {
         return Mat4(1);
