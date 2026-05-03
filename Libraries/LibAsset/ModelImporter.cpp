@@ -69,6 +69,7 @@ auto ModelImporter::import_obj(std::filesystem::path const& path) -> std::expect
         } else if (token == "vt") {
             auto& tex_coord = tex_coords.emplace_back();
             line_stream >> tex_coord.x >> tex_coord.y;
+            tex_coord.y = 1.0F - tex_coord.y;
         } else if (token == "vn") {
             auto& normal = normals.emplace_back();
             line_stream >> normal.x >> normal.y >> normal.z;
