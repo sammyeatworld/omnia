@@ -59,7 +59,7 @@ public:
         TRY_ASSIGN(sandbox->m_swapchain, sandbox->m_graphics_device->create_swapchain(swapchain_config));
 
         Graphics::ModelConfiguration cube_config;
-        TRY_ASSIGN(sandbox->m_cube_config, sandbox->m_import_manager.import<Graphics::ModelConfiguration>("Resources/Models/cube.obj"));
+        TRY_ASSIGN(sandbox->m_cube_config, sandbox->m_import_manager.import<Graphics::ModelConfiguration>("Resources/Models/viking_room.obj"));
 
         Renderer::Camera::Configuration const camera_config {
             .projection_type = Renderer::ProjectionType::Perspective,
@@ -136,7 +136,7 @@ public:
         }
 
         RHI::Texture::Configuration texture_config;
-        TRY_ASSIGN(texture_config, sandbox->m_import_manager.import<RHI::Texture::Configuration>("Resources/Textures/texture.jpg"));
+        TRY_ASSIGN(texture_config, sandbox->m_import_manager.import<RHI::Texture::Configuration>("Resources/Textures/viking_room.png"));
         TRY_ASSIGN(sandbox->m_texture, sandbox->m_graphics_device->create_texture(texture_config));
 
         RHI::Buffer::Configuration const uniform_buffer_config {
@@ -241,7 +241,7 @@ public:
 
     auto on_mouse_delta(UI::MouseDeltaEvent const& event) -> bool
     {
-        m_camera.rotate(static_cast<f32>(event.dy) * 0.1F, static_cast<f32>(-event.dx) * 0.1F, 0.0F);
+        m_camera.rotate(static_cast<f32>(-event.dy) * 0.1F, static_cast<f32>(-event.dx) * 0.1F, 0.0F);
         return true;
     }
 
@@ -348,9 +348,7 @@ public:
                         cmd->bind_vertex_buffer(m_cube_vb.get());
                         cmd->bind_index_buffer(m_cube_ib.get());
 
-                        static f32 rotation_angle = 0.0F;
-                        rotation_angle += 0.0001F;
-                        auto model_matrix = Math::Mat4f::rotation(rotation_angle, 0.0F, 0.0F);
+                        auto model_matrix = Math::Mat4f::rotation(DEG_TO_RAD(90.0F), 0.0F, 0.0F);
                         cmd->push_constants(m_per_object_push_constant, &model_matrix);
 
                         cmd->draw_indexed(m_cube_config.sub_meshes[0].indices.size(), 1, 0, 0, 0);

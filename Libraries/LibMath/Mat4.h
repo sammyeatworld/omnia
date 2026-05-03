@@ -60,12 +60,31 @@ public:
         return result;
     }
 
+    static constexpr auto translation(T x, T y, T z) -> Mat4
+    {
+        Mat4 result = identity();
+        result[12] = x;
+        result[13] = y;
+        result[14] = z;
+        return result;
+    }
+
+    static constexpr auto translation(Vec3<T> const& translation) -> Mat4
+    {
+        return translation(translation.x, translation.y, translation.z);
+    }
+
     static constexpr auto rotation(T pitch, T yaw, T roll) -> Mat4
     {
         auto const qx = Quat<T>::from_axis_angle(Vec3<T>{1, 0, 0}, pitch);
         auto const qy = Quat<T>::from_axis_angle(Vec3<T>{0, 1, 0}, yaw);
         auto const qz = Quat<T>::from_axis_angle(Vec3<T>{0, 0, 1}, roll);
         return from_quaternion(qz * qy * qx);
+    }
+
+    static constexpr auto rotation(Vec3<T> const& euler_angles) -> Mat4
+    {
+        return rotation(euler_angles.x, euler_angles.y, euler_angles.z);
     }
 
     static constexpr auto identity() -> Mat4

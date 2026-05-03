@@ -15,3 +15,4 @@
 #include <LibMath/Vec4.h>
 
 #define DEG_TO_RAD(angle_in_degrees) ((angle_in_degrees) * std::numbers::pi_v<f32> / 180.0F)
+#define RAD_TO_DEG(angle_in_radians) ((angle_in_radians) * 180.0F / std::numbers::pi_v<f32>)
