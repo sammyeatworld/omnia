@@ -8,6 +8,7 @@
 #include <LibAsset/ImportManager.h>
 #include <LibMath/Math.h>
 #include <LibRenderer/Camera.h>
+#include <LibRenderer/Model.h>
 #include <LibRHI/Device.h>
 #include <LibUI/Platform/Event.h>
 #include <LibUI/Platform/Window.h>
@@ -18,9 +19,9 @@
     {                                                          \
         auto result = (expr);                                  \
         if (!result.has_value()) {                             \
-            return std::unexpected(std::move(result.error())); \
+            return std::unexpected(std::move(result).error()); \
         }                                                      \
-        lhs = std::move(result.value());                       \
+        lhs = std::move(result).value();                       \
     }                                                          \
     (void)0
 
@@ -58,9 +59,6 @@ public:
         };
         TRY_ASSIGN(sandbox->m_swapchain, sandbox->m_graphics_device->create_swapchain(swapchain_config));
 
-        Graphics::ModelConfiguration cube_config;
-        TRY_ASSIGN(sandbox->m_cube_config, sandbox->m_import_manager.import<Graphics::ModelConfiguration>("Resources/Models/viking_room.obj"));
-
         Renderer::Camera::Configuration const camera_config {
             .projection_type = Renderer::ProjectionType::Perspective,
             .position = { 0.0F, 0.0F, 0.0F },
@@ -68,7 +66,7 @@ public:
                 .aspect_ratio = static_cast<f32>(swapchain_config.width) / static_cast<f32>(swapchain_config.height),
                 .field_of_view_degrees = 90.0F,
                 .near_plane = 0.1F,
-                .far_plane = 100.0F
+                .far_plane = 100000.0F
             }
         };
         sandbox->m_camera = Renderer::Camera(camera_config);
@@ -109,20 +107,6 @@ public:
             sandbox->m_swapchain_render_targets.push_back(std::move(render_target.value()));
         }
 
-        RHI::Buffer::Configuration const cube_vertex_buffer_config {
-            .size = sizeof(Graphics::Vertex) * sandbox->m_cube_config.sub_meshes[0].vertices.size(),
-            .usage = RHI::BufferUsage::Vertex,
-            .data = sandbox->m_cube_config.sub_meshes[0].vertices.data()
-        };
-        TRY_ASSIGN(sandbox->m_cube_vb, sandbox->m_graphics_device->create_buffer(cube_vertex_buffer_config));
-
-        RHI::Buffer::Configuration const cube_index_buffer_config {
-            .size = sizeof(Graphics::Index) * sandbox->m_cube_config.sub_meshes[0].indices.size(),
-            .usage = RHI::BufferUsage::Index,
-            .data = sandbox->m_cube_config.sub_meshes[0].indices.data()
-        };
-        TRY_ASSIGN(sandbox->m_cube_ib, sandbox->m_graphics_device->create_buffer(cube_index_buffer_config));
-
         {
             RHI::Shader::Configuration shader_config;
             TRY_ASSIGN(shader_config, sandbox->m_import_manager.import<RHI::Shader::Configuration>("Resources/Shaders/BaseObject.fs.glsl"));
@@ -135,36 +119,42 @@ public:
             TRY_ASSIGN(sandbox->m_vertex_shader, sandbox->m_graphics_device->create_shader(shader_config));
         }
 
-        RHI::Texture::Configuration texture_config;
-        TRY_ASSIGN(texture_config, sandbox->m_import_manager.import<RHI::Texture::Configuration>("Resources/Textures/viking_room.png"));
-        TRY_ASSIGN(sandbox->m_texture, sandbox->m_graphics_device->create_texture(texture_config));
-
         RHI::Buffer::Configuration const uniform_buffer_config {
             .size = sizeof(PerFrameData),
             .usage = RHI::BufferUsage::Uniform
         };
         TRY_ASSIGN(sandbox->m_per_frame, sandbox->m_graphics_device->create_buffer(uniform_buffer_config));
 
-        RHI::ResourceLayout::Configuration const main_resource_layout_config {
+        RHI::ResourceLayout::Configuration const per_frame_resource_layout_config {
             .bindings = {
                 {
                     .binding = 0,
-                    .type = RHI::ResourceType::Texture,
-                    .stage = Graphics::ShaderStage::Fragment
-                },
-                {
-                    .binding = 1,
                     .type = RHI::ResourceType::Sampler,
                     .stage = Graphics::ShaderStage::Fragment
                 },
                 {
-                    .binding = 2,
+                    .binding = 1,
                     .type = RHI::ResourceType::UniformBuffer,
                     .stage = Graphics::ShaderStage::Vertex
                 }
             }
         };
-        TRY_ASSIGN(sandbox->m_main_resource_layout, sandbox->m_graphics_device->create_resource_layout(main_resource_layout_config));
+        TRY_ASSIGN(sandbox->m_shared_resource_layout, sandbox->m_graphics_device->create_resource_layout(per_frame_resource_layout_config));
+
+        RHI::ResourceLayout::Configuration const material_resource_layout_config {
+            .bindings = {
+                {
+                    .binding = 0,
+                    .type = RHI::ResourceType::Texture,
+                    .stage = Graphics::ShaderStage::Fragment
+                }
+            }
+        };
+        TRY_ASSIGN(sandbox->m_material_resource_layout, sandbox->m_graphics_device->create_resource_layout(material_resource_layout_config));
+
+        Graphics::ModelConfiguration model_config;
+        TRY_ASSIGN(model_config, sandbox->m_import_manager.import<Graphics::ModelConfiguration>("Resources/Models/sponza/sponza.obj"));
+        TRY_ASSIGN(sandbox->m_sponza, Renderer::Model::create(model_config, sandbox->m_graphics_device.get(), sandbox->m_material_resource_layout.get()));
 
         RHI::Sampler::Configuration const sampler_config {
             .mag_filter = RHI::Filter::Linear,
@@ -178,12 +168,11 @@ public:
         TRY_ASSIGN(sandbox->m_sampler, sandbox->m_graphics_device->create_sampler(sampler_config));
 
         RHI::ResourceSet::Configuration const resource_set_config {
-            .layout = sandbox->m_main_resource_layout.get(),
+            .layout = sandbox->m_shared_resource_layout.get(),
         };
         TRY_ASSIGN(sandbox->m_resource_set, sandbox->m_graphics_device->create_resource_set(resource_set_config));
-        sandbox->m_resource_set->set_texture(0, sandbox->m_texture.get());
-        sandbox->m_resource_set->set_sampler(1, sandbox->m_sampler.get());
-        sandbox->m_resource_set->set_uniform_buffer(2, sandbox->m_per_frame.get());
+        sandbox->m_resource_set->set_sampler(0, sandbox->m_sampler.get());
+        sandbox->m_resource_set->set_uniform_buffer(1, sandbox->m_per_frame.get());
 
         sandbox->m_per_object_push_constant = {
             .size = sizeof(Math::Mat4f),
@@ -195,7 +184,7 @@ public:
             .vertex_shader = sandbox->m_vertex_shader.get(),
             .fragment_shader = sandbox->m_fragment_shader.get(),
             .rasterization = {
-                .cull_mode = RHI::CullMode::Back,
+                .cull_mode = RHI::CullMode::None,
                 .front_face = RHI::FrontFace::CounterClockwise,
                 .polygon_mode = RHI::PolygonMode::Fill
             },
@@ -226,7 +215,8 @@ public:
                 }
             },
             .resource_layouts = {
-                sandbox->m_main_resource_layout.get()
+                sandbox->m_shared_resource_layout.get(),
+                sandbox->m_material_resource_layout.get()
             },
             .push_constants = {
                 sandbox->m_per_object_push_constant
@@ -345,13 +335,17 @@ public:
                         cmd->set_viewport(0, 0, m_swapchain->width(), m_swapchain->height());
                         cmd->set_scissor(0, 0, m_swapchain->width(), m_swapchain->height());
                         cmd->bind_resource_set(0, m_resource_set.get());
-                        cmd->bind_vertex_buffer(m_cube_vb.get());
-                        cmd->bind_index_buffer(m_cube_ib.get());
 
-                        auto model_matrix = Math::Mat4f::rotation(DEG_TO_RAD(90.0F), 0.0F, 0.0F);
-                        cmd->push_constants(m_per_object_push_constant, &model_matrix);
+                        for (auto const& sub_mesh : m_sponza->sub_meshes()) {
+                            auto const& materials = m_sponza->materials();
 
-                        cmd->draw_indexed(m_cube_config.sub_meshes[0].indices.size(), 1, 0, 0, 0);
+                            cmd->bind_resource_set(1, materials[sub_mesh.material_index()].resource_set());
+                            cmd->bind_vertex_buffer(sub_mesh.vertex_buffer());
+                            cmd->bind_index_buffer(sub_mesh.index_buffer());
+                            auto model_matrix = Math::Mat4f::scale(0.05F, 0.05F, 0.05F);
+                            cmd->push_constants(m_per_object_push_constant, &model_matrix);
+                            cmd->draw_indexed(sub_mesh.index_count(), 1, 0, 0, 0);
+                        }
                     }
                 }
                 cmd->end_render_pass();
@@ -378,17 +372,15 @@ private:
     Asset::ImportManager m_import_manager;
     std::unique_ptr<RHI::Shader> m_vertex_shader;
     std::unique_ptr<RHI::Shader> m_fragment_shader;
-    std::unique_ptr<RHI::Buffer> m_cube_vb;
-    std::unique_ptr<RHI::Buffer> m_cube_ib;
-    std::unique_ptr<RHI::ResourceLayout> m_main_resource_layout;
+    std::unique_ptr<RHI::ResourceLayout> m_shared_resource_layout;
+    std::unique_ptr<RHI::ResourceLayout> m_material_resource_layout;
     std::unique_ptr<RHI::ResourceSet> m_resource_set;
-    std::unique_ptr<RHI::Texture> m_texture;
     std::unique_ptr<RHI::Texture> m_depth_texture;
     std::unique_ptr<RHI::Sampler> m_sampler;
+    std::unique_ptr<Renderer::Model> m_sponza;
     std::unique_ptr<RHI::Buffer> m_per_frame;
     RHI::Pipeline::PushConstant m_per_object_push_constant {};
     bool m_was_window_resized = false;
-    Graphics::ModelConfiguration m_cube_config;
     Renderer::Camera m_camera {};
 };
 

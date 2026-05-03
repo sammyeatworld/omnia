@@ -7,7 +7,7 @@ layout(location = 2) in vec3 in_normal;
 layout(location = 0) out vec2 out_tex_coord;
 layout(location = 1) out vec3 out_normal;
 
-layout(set = 0, binding = 2) uniform PerFrameData
+layout(set = 0, binding = 1) uniform PerFrameData
 {
     mat4 projection;
     mat4 view;
