@@ -160,9 +160,9 @@ void VkCommandBuffer::set_viewport(u32 x, u32 y, u32 width, u32 height) const
 {
     VkViewport const viewport {
         .x = static_cast<f32>(x),
-        .y = static_cast<f32>(y) + static_cast<f32>(height),
+        .y = static_cast<f32>(y),
         .width = static_cast<f32>(width),
-        .height = -static_cast<f32>(height),
+        .height = static_cast<f32>(height),
         .minDepth = 0.0F,
         .maxDepth = 1.0F
     };
