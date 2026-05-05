@@ -51,30 +51,30 @@ public:
         return m_elements[index];
     }
 
-    constexpr auto translate(Vec3<T> const& translation) const -> Mat4
+    constexpr auto translate(Vec3<T> const& translation) const -> Mat4<T>
     {
-        Mat4 result = *this;
+        Mat4<T> result = *this;
         result[12] += m_elements[0] * translation.x + m_elements[4] * translation.y + m_elements[8] * translation.z;
         result[13] += m_elements[1] * translation.x + m_elements[5] * translation.y + m_elements[9] * translation.z;
         result[14] += m_elements[2] * translation.x + m_elements[6] * translation.y + m_elements[10] * translation.z;
         return result;
     }
 
-    static constexpr auto translation(T x, T y, T z) -> Mat4
+    static constexpr auto translation(T x, T y, T z) -> Mat4<T>
     {
-        Mat4 result = identity();
+        Mat4<T> result = identity();
         result[12] = x;
         result[13] = y;
         result[14] = z;
         return result;
     }
 
-    static constexpr auto translation(Vec3<T> const& translation) -> Mat4
+    static constexpr auto translation(Vec3<T> const& translation) -> Mat4<T>
     {
         return translation(translation.x, translation.y, translation.z);
     }
 
-    static constexpr auto rotation(T pitch, T yaw, T roll) -> Mat4
+    static constexpr auto rotation(T pitch, T yaw, T roll) -> Mat4<T>
     {
         auto const qx = Quat<T>::from_axis_angle(Vec3<T>{1, 0, 0}, pitch);
         auto const qy = Quat<T>::from_axis_angle(Vec3<T>{0, 1, 0}, yaw);
@@ -82,31 +82,31 @@ public:
         return from_quaternion(qz * qy * qx);
     }
 
-    static constexpr auto rotation(Vec3<T> const& euler_angles) -> Mat4
+    static constexpr auto rotation(Vec3<T> const& euler_angles) -> Mat4<T>
     {
         return rotation(euler_angles.x, euler_angles.y, euler_angles.z);
     }
 
-    static constexpr auto scale(T x, T y, T z) -> Mat4
+    static constexpr auto scale(T x, T y, T z) -> Mat4<T>
     {
-        Mat4 result = identity();
+        Mat4<T> result = identity();
         result[0] = x;
         result[5] = y;
         result[10] = z;
         return result;
     }
 
-    static constexpr auto scale(Vec3<T> const& scale) -> Mat4
+    static constexpr auto scale(Vec3<T> const& scale) -> Mat4<T>
     {
-        return scale(scale.x, scale.y, scale.z);
+        return Mat4<T>::scale(scale.x, scale.y, scale.z);
     }
 
-    static constexpr auto identity() -> Mat4
+    static constexpr auto identity() -> Mat4<T>
     {
-        return Mat4(1);
+        return Mat4<T>(1);
     }
 
-    static constexpr auto perspective(T fov, T aspect_ratio, T near_plane, T far_plane) -> Mat4
+    static constexpr auto perspective(T fov, T aspect_ratio, T near_plane, T far_plane) -> Mat4<T>
     {
         auto const tan_half_fov = std::tan(fov / static_cast<T>(2));
         auto const t = tan_half_fov * near_plane;
@@ -114,7 +114,7 @@ public:
         auto const r = t * aspect_ratio;
         auto const l = -r;
 
-        Mat4 result {};
+        Mat4<T> result {};
         result[0] = (2 * near_plane) / (r - l);
         result[5] = -((2 * near_plane) / (t - b));
         result[10] = -far_plane / (far_plane - near_plane);
@@ -124,7 +124,7 @@ public:
         return result;
     }
 
-    static constexpr auto from_quaternion(Quat<T> const& quat) -> Mat4
+    static constexpr auto from_quaternion(Quat<T> const& quat) -> Mat4<T>
     {
         auto const xx = quat.x * quat.x;
         auto const yy = quat.y * quat.y;
@@ -136,7 +136,7 @@ public:
         auto const wy = quat.w * quat.y;
         auto const wz = quat.w * quat.z;
 
-        Mat4 result {};
+        Mat4<T> result {};
         result[0] = 1 - (2 * (yy + zz));
         result[1] = 2 * (xy - wz);
         result[2] = 2 * (xz + wy);

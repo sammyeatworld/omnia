@@ -39,7 +39,8 @@ public:
 
     constexpr auto operator*(Vec3<T> const& vec) const -> Vec3<T>
     {
-        Vec3<T> const this_vec(x, y, z);
+        auto normalized_quat = this->normalized();
+        Vec3<T> const this_vec(normalized_quat.x, normalized_quat.y, normalized_quat.z);
 
         auto t = cross(this_vec, vec) * static_cast<T>(2);
         auto result = vec + (t * w) + cross(this_vec, t);
@@ -55,9 +56,32 @@ public:
             (w * other.w) - (x * other.x) - (y * other.y) - (z * other.z));
     }
 
+    constexpr auto operator==(Quat const& other) const -> bool
+    {
+        return x == other.x && y == other.y && z == other.z && w == other.w;
+    }
+
     constexpr auto length() const -> T
     {
         return std::sqrt((x * x) + (y * y) + (z * z) + (w * w));
+    }
+
+    constexpr void normalize()
+    {
+        auto const length = this->length();
+        if (length == 0) {
+            x = 0;
+            y = 0;
+            z = 0;
+            w = 1;
+            return;
+        }
+
+        auto const inverted_length = 1.0F / length;
+        x *= inverted_length;
+        y *= inverted_length;
+        z *= inverted_length;
+        w *= inverted_length;
     }
 
     constexpr auto normalized() const -> Quat
