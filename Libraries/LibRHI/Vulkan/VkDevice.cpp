@@ -22,7 +22,7 @@
 #include <LibRHI/Vulkan/VkSwapchain.h>
 #include <LibRHI/Vulkan/VkTexture.h>
 #ifdef OA_OS_WINDOWS
-#    include <LibUI/Platform/Win32/WindowWin32.h>
+#    include <LibPlatform/Win32/WindowWin32.h>
 #endif
 
 namespace RHI {
@@ -283,7 +283,7 @@ auto VkDevice::create_instance() -> std::expected<void, std::string>
 auto VkDevice::create_surface() -> std::expected<void, std::string>
 {
 #ifdef OA_OS_WINDOWS
-    auto const* window = static_cast<UI::WindowWin32 const*>(m_config.window);
+    auto const* window = static_cast<Platform::WindowWin32 const*>(m_config.window);
 
     VkWin32SurfaceCreateInfoKHR const surface_info {
         .sType = VK_STRUCTURE_TYPE_WIN32_SURFACE_CREATE_INFO_KHR,

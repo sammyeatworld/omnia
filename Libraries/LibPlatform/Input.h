@@ -12,13 +12,13 @@
 #include <Common/Noncopyable.h>
 #include <Common/Types.h>
 #include <LibMath/Vec2.h>
-#include <LibUI/Export.h>
-#include <LibUI/Platform/Event.h>
-#include <LibUI/Platform/InputCodes.h>
+#include <LibPlatform/Export.h>
+#include <LibPlatform/Event.h>
+#include <LibPlatform/InputCodes.h>
 
-namespace UI {
+namespace Platform {
 
-class UI_API Input final {
+class PLATFORM_API Input final {
     OA_MAKE_DEFAULT_CONSTRUCTIBLE(Input);
 
 public:

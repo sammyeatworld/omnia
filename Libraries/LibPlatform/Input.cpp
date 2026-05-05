@@ -4,10 +4,10 @@
  * SPDX-License-Identifier: BSD-2-Clause
  */
 
-#include <LibUI/Platform/Event.h>
-#include <LibUI/Platform/Input.h>
+#include "Input.h"
+#include "Event.h"
 
-namespace UI {
+namespace Platform {
 
 Input::Input(EventDispatcher* dispatcher)
     : m_dispatcher(dispatcher)

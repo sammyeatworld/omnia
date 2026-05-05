@@ -6,6 +6,8 @@
 
 #pragma once
 
-namespace UI {
+namespace Platform {
+
+class Window;
 
 }

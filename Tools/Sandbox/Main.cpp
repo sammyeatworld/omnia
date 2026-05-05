@@ -10,8 +10,8 @@
 #include <LibRenderer/Camera.h>
 #include <LibRenderer/Model.h>
 #include <LibRHI/Device.h>
-#include <LibUI/Platform/Event.h>
-#include <LibUI/Platform/Window.h>
+#include <LibPlatform/Event.h>
+#include <LibPlatform/Window.h>
 
 #include <print>
 
@@ -39,12 +39,12 @@ public:
 
         sandbox->m_asset_manager.load_loose_assets("Resources/");
 
-        UI::Window::Configuration const window_config {
+        Platform::Window::Configuration const window_config {
             .title = "Omnia Sandbox",
             .width = 800,
             .height = 600
         };
-        TRY_ASSIGN(sandbox->m_window, UI::Window::create(window_config));
+        TRY_ASSIGN(sandbox->m_window, Platform::Window::create(window_config));
 
         RHI::Device::Configuration const device_config {
             .api = RHI::Device::API::Vulkan,
@@ -225,18 +225,18 @@ public:
         };
         TRY_ASSIGN(sandbox->m_pipeline, sandbox->m_graphics_device->create_pipeline(main_pipeline_config));
 
-        sandbox->m_window->event_dispatcher().register_listener<UI::MouseDeltaEvent>(std::bind_front(&Sandbox::on_mouse_delta, sandbox.get()));
-        sandbox->m_window->event_dispatcher().register_listener<UI::WindowResizeEvent>(std::bind_front(&Sandbox::on_resize, sandbox.get()));
+        sandbox->m_window->event_dispatcher().register_listener<Platform::MouseDeltaEvent>(std::bind_front(&Sandbox::on_mouse_delta, sandbox.get()));
+        sandbox->m_window->event_dispatcher().register_listener<Platform::WindowResizeEvent>(std::bind_front(&Sandbox::on_resize, sandbox.get()));
         return sandbox;
     }
 
-    auto on_mouse_delta(UI::MouseDeltaEvent const& event) -> bool
+    auto on_mouse_delta(Platform::MouseDeltaEvent const& event) -> bool
     {
         m_camera.rotate(static_cast<f32>(-event.dy) * 0.1F, static_cast<f32>(-event.dx) * 0.1F, 0.0F);
         return true;
     }
 
-    auto on_resize([[maybe_unused]] UI::WindowResizeEvent const& event) -> bool
+    auto on_resize([[maybe_unused]] Platform::WindowResizeEvent const& event) -> bool
     {
         m_camera.set_aspect_ratio(static_cast<f32>(m_window->width()) / static_cast<f32>(m_window->height()));
         m_was_window_resized = true;
@@ -311,12 +311,13 @@ public:
 
             auto const& input = m_window->input();
 
-            if (input.is_key_down(UI::Key::W) || input.is_key_down(UI::Key::A) || input.is_key_down(UI::Key::S) || input.is_key_down(UI::Key::D)) {
+            using namespace Platform;
+            if (input.is_key_down(Key::W) || input.is_key_down(Key::A) || input.is_key_down(Key::S) || input.is_key_down(Key::D)) {
                 Math::Vec3f movement {};
-                movement += m_camera.forward() * (input.is_key_down(UI::Key::W) ? 1.0F : 0.0F);
-                movement -= m_camera.forward() * (input.is_key_down(UI::Key::S) ? 1.0F : 0.0F);
-                movement -= m_camera.right() * (input.is_key_down(UI::Key::A) ? 1.0F : 0.0F);
-                movement += m_camera.right() * (input.is_key_down(UI::Key::D) ? 1.0F : 0.0F);
+                movement += m_camera.forward() * (input.is_key_down(Key::W) ? 1.0F : 0.0F);
+                movement -= m_camera.forward() * (input.is_key_down(Key::S) ? 1.0F : 0.0F);
+                movement -= m_camera.right() * (input.is_key_down(Key::A) ? 1.0F : 0.0F);
+                movement += m_camera.right() * (input.is_key_down(Key::D) ? 1.0F : 0.0F);
                 movement.normalize();
                 m_camera.translate(movement * 0.075F);
             }
@@ -364,7 +365,7 @@ public:
 private:
     Sandbox() = default;
 private:
-    std::unique_ptr<UI::Window> m_window;
+    std::unique_ptr<Platform::Window> m_window;
     std::unique_ptr<RHI::Device> m_graphics_device;
     std::unique_ptr<RHI::Swapchain> m_swapchain;
     std::unique_ptr<RHI::RenderPass> m_main_render_pass;

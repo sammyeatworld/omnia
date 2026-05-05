@@ -4,14 +4,14 @@
  * SPDX-License-Identifier: BSD-2-Clause
  */
 
+#include <Windows.h>
 #include <vector>
-#include <windows.h>
 #include <windowsx.h>
 
-#include <LibUI/Platform/Event.h>
-#include <LibUI/Platform/Win32/WindowWin32.h>
+#include <LibPlatform/Event.h>
+#include <LibPlatform/Win32/WindowWin32.h>
 
-namespace UI {
+namespace Platform {
 
 auto Window::create(Configuration const& config) -> std::expected<std::unique_ptr<Window>, std::string>
 {

@@ -12,10 +12,10 @@
 
 #include <Common/Noncopyable.h>
 #include <Common/Types.h>
-#include <LibUI/Export.h>
-#include <LibUI/Platform/Input.h>
+#include <LibPlatform/Export.h>
+#include <LibPlatform/Input.h>
 
-namespace UI {
+namespace Platform {
 
 class Window {
     OA_MAKE_NONCOPYABLE(Window);
@@ -41,7 +41,7 @@ public:
     virtual auto width() const -> i32 = 0;
     virtual auto height() const -> i32 = 0;
 
-    static auto UI_API create(Configuration const& config) -> std::expected<std::unique_ptr<Window>, std::string>;
+    static auto PLATFORM_API create(Configuration const& config) -> std::expected<std::unique_ptr<Window>, std::string>;
 protected:
     Window() = default;
 };

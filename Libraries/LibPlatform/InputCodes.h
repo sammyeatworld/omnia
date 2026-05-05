@@ -8,7 +8,7 @@
 
 #include <Common/Types.h>
 
-namespace UI {
+namespace Platform {
 
 enum class Key : u8 {
     BackSpace = 0x08,

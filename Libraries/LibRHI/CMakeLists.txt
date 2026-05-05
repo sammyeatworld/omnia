@@ -53,6 +53,6 @@ endif()
 
 omnia_lib(LibRHI
         SOURCES ${SOURCES}
-        LIBS LibUI
+        LIBS LibPlatform
         THIRD_PARTY PRIVATE ${THIRD_PARTY_LIBS}
 )

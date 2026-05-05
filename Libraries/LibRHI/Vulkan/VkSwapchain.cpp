@@ -8,9 +8,9 @@
 #include <cassert>
 #include <format>
 
+#include "Libraries/LibPlatform/Window.h"
 #include <LibRHI/Vulkan/VkRenderTarget.h>
 #include <LibRHI/Vulkan/VkSwapchain.h>
-#include <LibUI/Platform/Window.h>
 
 namespace RHI {
 

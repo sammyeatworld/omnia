@@ -12,9 +12,9 @@
 
 #include <Common/Noncopyable.h>
 #include <Common/Types.h>
-#include <LibUI/Platform/Event.h>
-#include <LibUI/Platform/Input.h>
-#include <LibUI/Platform/Window.h>
+#include <LibPlatform/Event.h>
+#include <LibPlatform/Input.h>
+#include <LibPlatform/Window.h>
 
 struct HWND__;
 struct HINSTANCE__;
@@ -22,7 +22,7 @@ struct HINSTANCE__;
 using HWND = HWND__*;
 using HINSTANCE = HINSTANCE__*;
 
-namespace UI {
+namespace Platform {
 
 class WindowWin32 final : public Window {
     OA_MAKE_NONCOPYABLE(WindowWin32);
@@ -42,8 +42,8 @@ public:
     auto width() const -> i32 override;
     auto height() const -> i32 override;
 
-    auto UI_API instance() const -> HINSTANCE;
-    auto UI_API handle() const -> HWND;
+    auto PLATFORM_API instance() const -> HINSTANCE;
+    auto PLATFORM_API handle() const -> HWND;
 
     static auto create(Configuration const& config) -> std::expected<std::unique_ptr<WindowWin32>, std::string>;
 private:

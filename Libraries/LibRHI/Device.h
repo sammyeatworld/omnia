@@ -20,7 +20,7 @@
 #include <LibRHI/Shader.h>
 #include <LibRHI/Swapchain.h>
 #include <LibRHI/Texture.h>
-#include <LibUI/Forward.h>
+#include <LibPlatform/Forward.h>
 
 #include <expected>
 #include <memory>
@@ -43,7 +43,7 @@ public:
     struct Configuration {
         API api;
         bool enable_debug_layer;
-        UI::Window const* window;
+        Platform::Window const* window;
     };
 
     static auto RHI_API create(Configuration const& config) -> std::expected<std::unique_ptr<Device>, std::string>;

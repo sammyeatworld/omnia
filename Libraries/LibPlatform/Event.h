@@ -12,10 +12,10 @@
 #include <vector>
 
 #include <LibMath/Vec2.h>
-#include <LibUI/Export.h>
-#include <LibUI/Platform/InputCodes.h>
+#include <LibPlatform/Export.h>
+#include <LibPlatform/InputCodes.h>
 
-namespace UI {
+namespace Platform {
 
 struct KeyEvent {
     Key key {};
@@ -52,7 +52,7 @@ using EventVariant = std::variant<
     WindowResizeEvent,
     WindowCloseEvent>;
 
-class UI_API EventDispatcher {
+class PLATFORM_API EventDispatcher {
 public:
     template<typename EventType>
     using Callback = std::function<bool(EventType const&)>;
