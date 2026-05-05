@@ -19,4 +19,5 @@ include(BaseTargets)
 
 add_subdirectory(Common)
 add_subdirectory(Libraries)
+add_subdirectory(Tests)
 add_subdirectory(Tools)

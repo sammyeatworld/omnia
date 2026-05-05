@@ -41,6 +41,25 @@ function(omnia_app target)
     endif ()
 endfunction()
 
+function(omnia_test target)
+    cmake_parse_arguments(OMNIA "" "" "SOURCES;LIBS;THIRD_PARTY" ${ARGN})
+
+    string(APPEND target "Test")
+
+    add_executable(${target})
+
+    find_package(GTest CONFIG REQUIRED)
+    include(GoogleTest)
+
+    target_sources(${target} PRIVATE ${OMNIA_SOURCES})
+    target_link_libraries(${target} PRIVATE Common ${OMNIA_LIBS} ${OMNIA_THIRD_PARTY} GTest::gtest_main)
+    if (OMNIA_LIBS)
+        add_dependencies(${target} ${OMNIA_LIBS})
+    endif ()
+
+    gtest_discover_tests(${target})
+endfunction()
+
 add_custom_target(
         CopyResources
         COMMAND ${CMAKE_COMMAND} -E copy_directory
