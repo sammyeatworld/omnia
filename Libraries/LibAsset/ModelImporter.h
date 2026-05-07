@@ -30,8 +30,6 @@ public:
     static auto import(std::filesystem::path const& path, AssetRegistry const& asset_registry) -> std::expected<ModelData, std::string>;
     static auto supported_extensions() -> std::vector<std::string>;
 private:
-    static auto import_obj(std::filesystem::path const& path, AssetRegistry const& asset_registry) -> std::expected<ModelData, std::string>;
-    static auto import_mtl(std::filesystem::path const& path, AssetRegistry const& asset_registry) -> std::expected<std::vector<MaterialData>, std::string>;
     static auto import_gltf(std::filesystem::path const& path, AssetRegistry const& asset_registry) -> std::expected<ModelData, std::string>;
 };
 

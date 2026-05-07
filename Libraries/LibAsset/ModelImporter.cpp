@@ -25,9 +25,7 @@ auto ModelImporter::import(std::filesystem::path const& path, AssetRegistry cons
         return std::unexpected(std::format("Unsupported model file extension '{}'", extension));
     }
 
-    if (extension == ".obj") {
-        return import_obj(path, asset_registry);
-    } else if (extension == ".gltf") {
+    if (extension == ".gltf") {
         return import_gltf(path, asset_registry);
     }
 
@@ -36,165 +34,7 @@ auto ModelImporter::import(std::filesystem::path const& path, AssetRegistry cons
 
 auto ModelImporter::supported_extensions() -> std::vector<std::string>
 {
-    return { ".obj", ".gltf" };
-}
-
-auto ModelImporter::import_obj(std::filesystem::path const& path, AssetRegistry const& asset_registry) -> std::expected<ModelData, std::string>
-{
-    auto lines = File::read_lines(path);
-    if (!lines) {
-        return std::unexpected(std::move(lines.error()));
-    }
-
-    ModelData model_data;
-    std::unordered_map<std::string, u32> vertex_cache;
-    std::vector<Math::Vec3f> positions;
-    std::vector<Math::Vec2f> tex_coords;
-    std::vector<Math::Vec3f> normals;
-
-    Graphics::SubMeshData* current_sub_mesh = nullptr;
-
-    bool current_material_changed = false;
-    u64 current_material_index = 0;
-
-    for (auto const& line : lines.value()) {
-        std::istringstream line_stream(line);
-        std::string token;
-        line_stream >> token;
-
-        if (token == "mtllib") {
-            std::filesystem::path mtl_path;
-            line_stream >> mtl_path;
-            mtl_path = path.parent_path() / mtl_path;
-            auto materials_result = import_mtl(mtl_path, asset_registry);
-            if (!materials_result) {
-                return std::unexpected(std::move(materials_result).error());
-            }
-            model_data.materials = std::move(materials_result).value();
-        } else if (token == "usemtl") {
-            std::string material_name;
-            line_stream >> material_name;
-
-            auto it = std::ranges::find_if(model_data.materials, [&material_name](auto const& material) {
-                return material.name == material_name;
-            });
-
-            if (it != model_data.materials.end()) {
-                current_material_index = std::distance(model_data.materials.begin(), it);
-            } else {
-                current_material_index = model_data.materials.size();
-                auto& material = model_data.materials.emplace_back();
-                material.name = std::move(material_name);
-            }
-            current_material_changed = true;
-        } else if (token == "o" || token == "g") {
-            model_data.sub_meshes.emplace_back();
-            current_sub_mesh = &model_data.sub_meshes.back();
-            current_sub_mesh->material_index = current_material_index;
-            current_material_changed = false;
-            vertex_cache.clear();
-        } else if (token == "v") {
-            auto& position = positions.emplace_back();
-            line_stream >> position.x >> position.y >> position.z;
-        } else if (token == "vt") {
-            auto& tex_coord = tex_coords.emplace_back();
-            line_stream >> tex_coord.x >> tex_coord.y;
-            tex_coord.y = 1.0F - tex_coord.y;
-        } else if (token == "vn") {
-            auto& normal = normals.emplace_back();
-            line_stream >> normal.x >> normal.y >> normal.z;
-        } else if (token == "f") {
-            if (current_sub_mesh == nullptr || current_material_changed) {
-                model_data.sub_meshes.emplace_back();
-                current_sub_mesh = &model_data.sub_meshes.back();
-                current_sub_mesh->material_index = current_material_index;
-                current_material_changed = false;
-                vertex_cache.clear();
-            }
-
-            std::vector<std::string> face_tokens;
-            std::string face_token;
-            while (line_stream >> face_token) {
-                face_tokens.push_back(std::move(face_token));
-            }
-
-            for (std::size_t i = 1; i + 1 < face_tokens.size(); ++i) {
-                for (std::size_t const j : { 0ULL, i, i + 1 }) {
-                    auto& vertex_token = face_tokens[j];
-
-                    if (auto it = vertex_cache.find(vertex_token); it != vertex_cache.end()) {
-                        current_sub_mesh->indices.push_back(it->second);
-                        continue;
-                    }
-
-                    std::istringstream vertex_stream(vertex_token);
-
-                    Graphics::Vertex vertex {};
-                    std::string vertex_index;
-                    u32 index_count = 0;
-
-                    while (std::getline(vertex_stream, vertex_index, '/')) {
-                        if (!vertex_index.empty()) {
-                            auto index_value = std::stoul(vertex_index) - 1;
-
-                            if (index_count == 0 && index_value < positions.size()) {
-                                vertex.position = positions[index_value];
-                            } else if (index_count == 1 && index_value < tex_coords.size()) {
-                                vertex.tex_coord = tex_coords[index_value];
-                            } else if (index_count == 2 && index_value < normals.size()) {
-                                vertex.normal = normals[index_value];
-                            }
-                        }
-                        ++index_count;
-                    }
-
-                    auto index = static_cast<Graphics::Index>(current_sub_mesh->vertices.size());
-                    current_sub_mesh->vertices.push_back(vertex);
-                    current_sub_mesh->indices.push_back(index);
-                    vertex_cache[vertex_token] = index;
-                }
-            }
-        }
-    }
-
-    std::erase_if(model_data.sub_meshes, [](auto const& submesh) {
-        return submesh.indices.empty();
-    });
-
-    return model_data;
-}
-
-auto ModelImporter::import_mtl(std::filesystem::path const& path, AssetRegistry const& asset_registry) -> std::expected<std::vector<MaterialData>, std::string>
-{
-    auto lines = File::read_lines(path);
-    if (!lines) {
-        return std::unexpected(std::move(lines).error());
-    }
-
-    std::vector<MaterialData> material_data;
-    MaterialData* current_material = nullptr;
-
-    for (auto const& line : lines.value()) {
-        std::istringstream line_stream(line);
-        std::string token;
-        line_stream >> token;
-
-        if (token == "newmtl") {
-            material_data.emplace_back();
-            current_material = &material_data.back();
-            line_stream >> current_material->name;
-        } else if (current_material != nullptr) {
-            if (token == "map_Kd") {
-                std::filesystem::path texture_path;
-                line_stream >> texture_path;
-                texture_path = path.parent_path() / texture_path;
-                auto key = asset_registry.resolve_key(texture_path);
-                current_material->albedo_texture_id = asset_registry.key_to_id(key);
-            }
-        }
-    }
-
-    return material_data;
+    return { ".gltf" };
 }
 
 auto ModelImporter::import_gltf(std::filesystem::path const& path, AssetRegistry const& asset_registry) -> std::expected<ModelData, std::string>
@@ -204,7 +44,7 @@ auto ModelImporter::import_gltf(std::filesystem::path const& path, AssetRegistry
         return std::unexpected(std::move(file_data).error());
     }
 
-    cgltf_options options {};
+    cgltf_options const options {};
     cgltf_data* data = nullptr;
     if (cgltf_parse(&options, file_data->data(), file_data->size(), &data) != cgltf_result_success) {
         return std::unexpected(std::format("Failed to parse glTF file '{}'", path.string()));
