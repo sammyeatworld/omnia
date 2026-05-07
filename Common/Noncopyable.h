@@ -33,3 +33,7 @@ c& operator=(c const&) = default
 #define OA_MAKE_DEFAULT_CONSTRUCTIBLE(c) \
 public:                                  \
 c() = default
+
+#define OA_MAKE_DEFAULT_DESTRUCTIBLE(c) \
+public:                                  \
+~c() = default
