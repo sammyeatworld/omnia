@@ -14,16 +14,15 @@
 namespace RHI {
 
 enum class TextureUsage : u8 {
-    Sampled = 0,
-    RenderTarget,
-    DepthStencil
+    Sampled         = 1 << 0,
+    ColorAttachment = 1 << 1,
+    DepthStencil    = 1 << 2
 };
 
 enum class TextureFormat : u8 {
     Unknown = 0,
-    B8G8R8A8_SRGB,
+    R16G16B16A16_SFLOAT,
     R8G8B8A8_SRGB,
-    B8G8R8A8_UNORM,
     R8G8B8A8_UNORM,
     D32_SFLOAT,
 };
@@ -45,8 +44,24 @@ public:
 
     virtual auto width() const -> u32 = 0;
     virtual auto height() const -> u32 = 0;
+    virtual auto format() const -> TextureFormat = 0;
 protected:
     Texture() = default;
 };
+
+static constexpr auto operator|(TextureUsage lhs, TextureUsage rhs) -> TextureUsage
+{
+    return static_cast<TextureUsage>(static_cast<u8>(lhs) | static_cast<u8>(rhs));
+}
+
+static constexpr auto operator&(TextureUsage lhs, TextureUsage rhs) -> TextureUsage
+{
+    return static_cast<TextureUsage>(static_cast<u8>(lhs) & static_cast<u8>(rhs));
+}
+
+static constexpr auto any(TextureUsage usage) -> bool
+{
+    return static_cast<u8>(usage) != 0;
+}
 
 }

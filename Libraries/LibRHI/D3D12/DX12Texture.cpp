@@ -29,4 +29,9 @@ auto DX12Texture::height() const -> u32
     return 0;
 }
 
+auto DX12Texture::format() const -> TextureFormat
+{
+    return TextureFormat::Unknown;
+}
+
 }

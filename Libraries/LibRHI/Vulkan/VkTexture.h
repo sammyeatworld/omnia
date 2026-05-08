@@ -28,6 +28,7 @@ public:
 
     auto width() const -> u32 override;
     auto height() const -> u32 override;
+    auto format() const -> TextureFormat override;
     auto image() const -> VkImage;
     auto image_view() const -> VkImageView;
 private:
@@ -35,6 +36,7 @@ private:
 private:
     u32 m_width {};
     u32 m_height {};
+    TextureFormat m_format {};
     RHI::VkDevice const* m_device {};
     VkImage m_image {};
     VkImageView m_image_view {};

@@ -26,6 +26,7 @@ public:
 
     auto width() const -> u32 override;
     auto height() const -> u32 override;
+    auto format() const -> TextureFormat override;
 private:
     DX12Texture() = default;
 };

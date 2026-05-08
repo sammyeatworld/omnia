@@ -8,7 +8,7 @@
 #include <cassert>
 #include <format>
 
-#include "Libraries/LibPlatform/Window.h"
+#include <LibPlatform/Window.h>
 #include <LibRHI/Vulkan/VkRenderTarget.h>
 #include <LibRHI/Vulkan/VkSwapchain.h>
 
@@ -159,7 +159,7 @@ auto VkSwapchain::select_surface_format() const -> VkSurfaceFormatKHR
 {
     auto const& surface_formats = m_device->selected_physical_device()->surface_formats();
     auto surface_format_if = std::ranges::find_if(surface_formats.begin(), surface_formats.end(), [](VkSurfaceFormatKHR const& surface_format) {
-        return surface_format.format == VK_FORMAT_B8G8R8A8_SRGB && surface_format.colorSpace == VK_COLOR_SPACE_SRGB_NONLINEAR_KHR;
+        return surface_format.format == VK_FORMAT_R8G8B8A8_SRGB && surface_format.colorSpace == VK_COLOR_SPACE_SRGB_NONLINEAR_KHR;
     });
     return surface_format_if != surface_formats.end() ? *surface_format_if : surface_formats[0];
 }
@@ -249,7 +249,7 @@ auto VkSwapchain::create_images() -> std::expected<void, std::string>
             .width = m_extent.width,
             .height = m_extent.height,
             .format = to_graphics(m_surface_format.format),
-            .usage = TextureUsage::RenderTarget,
+            .usage = TextureUsage::ColorAttachment,
             .data = {}
         };
 

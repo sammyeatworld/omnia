@@ -16,6 +16,7 @@ auto VkTexture::create_owned(Configuration const& config, RHI::VkDevice const* d
     std::unique_ptr<VkTexture> texture(new VkTexture);
     texture->m_width = config.width;
     texture->m_height = config.height;
+    texture->m_format = config.format;
     texture->m_device = device;
     texture->m_owned = true;
 
@@ -135,6 +136,11 @@ auto VkTexture::height() const -> u32
     return m_height;
 }
 
+auto VkTexture::format() const -> TextureFormat
+{
+    return m_format;
+}
+
 auto VkTexture::image() const -> VkImage
 {
     return m_image;
@@ -149,12 +155,10 @@ auto to_graphics(VkFormat format) -> TextureFormat
 {
     switch (format) {
         using enum TextureFormat;
-    case VK_FORMAT_B8G8R8A8_SRGB:
-        return B8G8R8A8_SRGB;
+    case VK_FORMAT_R16G16B16A16_SFLOAT:
+        return R16G16B16A16_SFLOAT;
     case VK_FORMAT_R8G8B8A8_SRGB:
         return R8G8B8A8_SRGB;
-    case VK_FORMAT_B8G8R8A8_UNORM:
-        return B8G8R8A8_UNORM;
     case VK_FORMAT_R8G8B8A8_UNORM:
         return R8G8B8A8_UNORM;
     case VK_FORMAT_D32_SFLOAT:
@@ -168,9 +172,8 @@ auto to_vk_aspect(TextureFormat format) -> VkImageAspectFlags
 {
     switch (format) {
         using enum TextureFormat;
-    case B8G8R8A8_SRGB:
+    case R16G16B16A16_SFLOAT:
     case R8G8B8A8_SRGB:
-    case B8G8R8A8_UNORM:
     case R8G8B8A8_UNORM:
         return VK_IMAGE_ASPECT_COLOR_BIT;
     case D32_SFLOAT:
@@ -182,29 +185,29 @@ auto to_vk_aspect(TextureFormat format) -> VkImageAspectFlags
 
 auto to_vk(TextureUsage usage) -> VkImageUsageFlags
 {
-    switch (usage) {
-        using enum TextureUsage;
-    case Sampled:
-        return VK_IMAGE_USAGE_SAMPLED_BIT | VK_IMAGE_USAGE_TRANSFER_DST_BIT;
-    case RenderTarget:
-        return VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT;
-    case DepthStencil:
-        return VK_IMAGE_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT;
-    default:
-        return 0;
+    using enum TextureUsage;
+
+    VkImageUsageFlags flags {};
+    if (any(usage & Sampled)) {
+        flags |= VK_IMAGE_USAGE_SAMPLED_BIT | VK_IMAGE_USAGE_TRANSFER_DST_BIT;
     }
+    if (any(usage & ColorAttachment)) {
+        flags |= VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT;
+    }
+    if (any(usage & DepthStencil)) {
+        flags |= VK_IMAGE_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT;
+    }
+    return flags;
 }
 
 auto to_vk(TextureFormat format) -> VkFormat
 {
     switch (format) {
         using enum TextureFormat;
-    case B8G8R8A8_SRGB:
-        return VK_FORMAT_B8G8R8A8_SRGB;
+    case R16G16B16A16_SFLOAT:
+        return VK_FORMAT_R16G16B16A16_SFLOAT;
     case R8G8B8A8_SRGB:
         return VK_FORMAT_R8G8B8A8_SRGB;
-    case B8G8R8A8_UNORM:
-        return VK_FORMAT_B8G8R8A8_UNORM;
     case R8G8B8A8_UNORM:
         return VK_FORMAT_R8G8B8A8_UNORM;
     case D32_SFLOAT:
