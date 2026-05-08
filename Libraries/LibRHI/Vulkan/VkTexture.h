@@ -26,13 +26,15 @@ public:
 
     ~VkTexture() override;
 
-    auto config() const -> Configuration const& override;
+    auto width() const -> u32 override;
+    auto height() const -> u32 override;
     auto image() const -> VkImage;
     auto image_view() const -> VkImageView;
 private:
     VkTexture() = default;
 private:
-    Configuration m_config {};
+    u32 m_width {};
+    u32 m_height {};
     RHI::VkDevice const* m_device {};
     VkImage m_image {};
     VkImageView m_image_view {};

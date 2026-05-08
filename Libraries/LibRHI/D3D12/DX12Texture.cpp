@@ -11,7 +11,7 @@ namespace RHI {
 auto DX12Texture::create(Configuration const& config) -> std::expected<std::unique_ptr<DX12Texture>, std::string>
 {
     std::unique_ptr<DX12Texture> texture(new DX12Texture);
-    texture->m_config = config;
+    (void)config;
     return texture;
 }
 
@@ -19,9 +19,14 @@ DX12Texture::~DX12Texture()
 {
 }
 
-auto DX12Texture::config() const -> Configuration const&
+auto DX12Texture::width() const -> u32
 {
-    return m_config;
+    return 0;
+}
+
+auto DX12Texture::height() const -> u32
+{
+    return 0;
 }
 
 }

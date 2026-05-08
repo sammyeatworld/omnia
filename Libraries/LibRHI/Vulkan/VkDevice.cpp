@@ -468,9 +468,9 @@ auto VkDevice::create_render_pass(RenderPass::Configuration const& config) const
     return VkRenderPass::create(config, this);
 }
 
-auto VkDevice::create_render_target(RenderPass const* render_pass, Texture const* texture, Texture const* depth_texture) const -> std::expected<std::unique_ptr<RenderTarget>, std::string>
+auto VkDevice::create_render_target(RenderTarget::Configuration const& config) const -> std::expected<std::unique_ptr<RenderTarget>, std::string>
 {
-    return VkRenderTarget::create(render_pass, texture, depth_texture, this);
+    return VkRenderTarget::create(config, this);
 }
 
 auto VkDevice::create_resource_layout(ResourceLayout::Configuration const& config) const -> std::expected<std::unique_ptr<ResourceLayout>, std::string>

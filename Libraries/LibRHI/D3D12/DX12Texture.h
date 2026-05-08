@@ -24,11 +24,10 @@ public:
 
     ~DX12Texture() override;
 
-    auto config() const -> Configuration const& override;
+    auto width() const -> u32 override;
+    auto height() const -> u32 override;
 private:
     DX12Texture() = default;
-private:
-    Configuration m_config {};
 };
 
 }

@@ -4,6 +4,7 @@
  * SPDX-License-Identifier: BSD-2-Clause
  */
 
+#include <cassert>
 #include <format>
 
 #include <LibRHI/Vulkan/VkRenderPass.h>
@@ -12,23 +13,27 @@
 
 namespace RHI {
 
-auto VkRenderTarget::create(RenderPass const* render_pass, Texture const* texture, Texture const* depth_texture, RHI::VkDevice const* device) -> std::expected<std::unique_ptr<VkRenderTarget>, std::string>
+auto VkRenderTarget::create(Configuration const& config, RHI::VkDevice const* device) -> std::expected<std::unique_ptr<VkRenderTarget>, std::string>
 {
-    auto const* vk_render_pass = to_vk(render_pass);
-    auto const* vk_texture = to_vk(texture);
+    assert(config.textures.size() > 0);
 
     std::unique_ptr<VkRenderTarget> render_target(new VkRenderTarget);
     render_target->m_device = device;
-    render_target->m_extent = {
-        .width = vk_texture->config().width,
-        .height = vk_texture->config().height
-    };
+    render_target->m_width = config.textures[0]->width();
+    render_target->m_height = config.textures[0]->height();
 
-    std::vector<VkImageView> attachments = { vk_texture->image_view() };
-    if (depth_texture != nullptr) {
-        attachments.push_back(to_vk(depth_texture)->image_view());
+    std::vector<VkImageView> attachments;
+
+    for (auto const* texture : config.textures) {
+        auto* vk_texture = to_vk(texture);
+        attachments.push_back(vk_texture->image_view());
     }
 
+    if (config.depth_texture != nullptr) {
+        attachments.push_back(to_vk(config.depth_texture)->image_view());
+    }
+
+    auto const* vk_render_pass = to_vk(config.render_pass);
     VkFramebufferCreateInfo const framebuffer_create_info {
         .sType = VK_STRUCTURE_TYPE_FRAMEBUFFER_CREATE_INFO,
         .pNext = nullptr,
@@ -36,8 +41,8 @@ auto VkRenderTarget::create(RenderPass const* render_pass, Texture const* textur
         .renderPass = vk_render_pass->handle(),
         .attachmentCount = static_cast<u32>(attachments.size()),
         .pAttachments = attachments.data(),
-        .width = vk_texture->config().width,
-        .height = vk_texture->config().height,
+        .width = render_target->m_width,
+        .height = render_target->m_height,
         .layers = 1
     };
 
@@ -60,9 +65,14 @@ auto VkRenderTarget::framebuffer() const -> VkFramebuffer
     return m_framebuffer;
 }
 
-auto VkRenderTarget::extent() const -> VkExtent2D
+auto VkRenderTarget::width() const -> u32
 {
-    return m_extent;
+    return m_width;
+}
+
+auto VkRenderTarget::height() const -> u32
+{
+    return m_height;
 }
 
 auto to_vk(RenderTarget const* render_target) -> VkRenderTarget const*

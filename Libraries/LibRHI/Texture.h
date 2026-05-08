@@ -43,7 +43,8 @@ public:
 
     virtual ~Texture() = default;
 
-    virtual auto config() const -> Configuration const& = 0;
+    virtual auto width() const -> u32 = 0;
+    virtual auto height() const -> u32 = 0;
 protected:
     Texture() = default;
 };

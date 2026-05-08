@@ -14,7 +14,8 @@ namespace RHI {
 auto VkTexture::create_owned(Configuration const& config, RHI::VkDevice const* device) -> std::expected<std::unique_ptr<VkTexture>, std::string>
 {
     std::unique_ptr<VkTexture> texture(new VkTexture);
-    texture->m_config = config;
+    texture->m_width = config.width;
+    texture->m_height = config.height;
     texture->m_device = device;
     texture->m_owned = true;
 
@@ -106,7 +107,8 @@ auto VkTexture::create_owned(Configuration const& config, RHI::VkDevice const* d
 auto VkTexture::create_borrowed(Configuration const& config, const RHI::VkDevice* device, VkImage image, VkImageView image_view) -> std::expected<std::unique_ptr<VkTexture>, std::string>
 {
     std::unique_ptr<VkTexture> texture(new VkTexture);
-    texture->m_config = config;
+    texture->m_width = config.width;
+    texture->m_height = config.height;
     texture->m_device = device;
     texture->m_image = image;
     texture->m_image_view = image_view;
@@ -123,9 +125,14 @@ VkTexture::~VkTexture()
     }
 }
 
-auto VkTexture::config() const -> Configuration const&
+auto VkTexture::width() const -> u32
 {
-    return m_config;
+    return m_width;
+}
+
+auto VkTexture::height() const -> u32
+{
+    return m_height;
 }
 
 auto VkTexture::image() const -> VkImage

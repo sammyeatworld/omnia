@@ -110,7 +110,12 @@ public:
 
         auto const& swapchain_textures = sandbox->m_swapchain->textures();
         for (auto const& swapchain_texture : swapchain_textures) {
-            auto render_target = sandbox->m_graphics_device->create_render_target(sandbox->m_main_render_pass.get(), swapchain_texture.get(), sandbox->m_depth_texture.get());
+            RHI::RenderTarget::Configuration const render_target_config {
+                .render_pass = sandbox->m_main_render_pass.get(),
+                .textures = { swapchain_texture.get() },
+                .depth_texture = sandbox->m_depth_texture.get()
+            };
+            auto render_target = sandbox->m_graphics_device->create_render_target(render_target_config);
             if (!render_target.has_value()) {
                 return std::unexpected(std::move(render_target.error()));
             }
@@ -268,7 +273,12 @@ public:
 
         auto const& swapchain_textures = m_swapchain->textures();
         for (auto const& swapchain_texture : swapchain_textures) {
-            auto render_target = m_graphics_device->create_render_target(m_main_render_pass.get(), swapchain_texture.get(), m_depth_texture.get());
+            RHI::RenderTarget::Configuration const render_target_config {
+                .render_pass = m_main_render_pass.get(),
+                .textures = { swapchain_texture.get() },
+                .depth_texture = m_depth_texture.get()
+            };
+            auto render_target = m_graphics_device->create_render_target(render_target_config);
             if (!render_target.has_value()) {
                 std::println(stderr, "{}", render_target.error());
                 return false;

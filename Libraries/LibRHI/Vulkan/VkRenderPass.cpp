@@ -50,7 +50,8 @@ void VkRenderPass::begin(CommandBuffer const* command_buffer, RenderTarget const
         .framebuffer = vk_render_target->framebuffer(),
         .renderArea = {
             .offset = { 0, 0 },
-            .extent = vk_render_target->extent() },
+            .extent = { vk_render_target->width(), vk_render_target->height() }
+        },
         .clearValueCount = static_cast<u32>(m_clear_values.size()),
         .pClearValues = m_clear_values.data()
     };
