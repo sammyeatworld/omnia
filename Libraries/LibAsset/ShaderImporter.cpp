@@ -45,7 +45,7 @@ auto ShaderImporter::import(std::filesystem::path const& path) -> std::expected<
         Graphics::ShaderVariant spirv_variant;
         spirv_variant.format = Graphics::ShaderFormat::SPIRV;
 
-        auto compiled_spirv = ShaderCompiler::compile_spirv(file_content.value(), shader_stage);
+        auto compiled_spirv = ShaderCompiler::compile_spirv(path, file_content.value(), shader_stage);
         if (!compiled_spirv) {
             return std::unexpected(compiled_spirv.error());
         }
