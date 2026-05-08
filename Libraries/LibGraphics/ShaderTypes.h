@@ -19,8 +19,8 @@ enum class ShaderFormat : u8 {
 };
 
 enum class ShaderStage : u8 {
-    Vertex = 0,
-    Fragment,
+    Vertex = 1,
+    Fragment
 };
 
 struct ShaderVariant {
@@ -32,5 +32,20 @@ struct ShaderData {
     ShaderStage stage;
     std::vector<ShaderVariant> variants;
 };
+
+static constexpr auto operator|(ShaderStage lhs, ShaderStage rhs) -> ShaderStage
+{
+    return static_cast<ShaderStage>(static_cast<u8>(lhs) | static_cast<u8>(rhs));
+}
+
+static constexpr auto operator&(ShaderStage lhs, ShaderStage rhs) -> ShaderStage
+{
+    return static_cast<ShaderStage>(static_cast<u8>(lhs) & static_cast<u8>(rhs));
+}
+
+static constexpr auto any(ShaderStage stage) -> bool
+{
+    return static_cast<u8>(stage) != 0;
+}
 
 }

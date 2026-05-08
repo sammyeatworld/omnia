@@ -63,13 +63,16 @@ auto to_vk(Shader const* shader) -> RHI::VkShader const*
 
 auto to_vk(Graphics::ShaderStage stage) -> VkShaderStageFlags
 {
-    switch (stage) {
-        using enum Graphics::ShaderStage;
-    case Vertex:
-        return VK_SHADER_STAGE_VERTEX_BIT;
-    case Fragment:
-        return VK_SHADER_STAGE_FRAGMENT_BIT;
+    using enum Graphics::ShaderStage;
+
+    VkShaderStageFlags flags {};
+    if (any(stage & Vertex)) {
+        flags |= VK_SHADER_STAGE_VERTEX_BIT;
     }
+    if (any(stage & Fragment)) {
+        flags |= VK_SHADER_STAGE_FRAGMENT_BIT;
+    }
+    return flags;
 }
 
 }
