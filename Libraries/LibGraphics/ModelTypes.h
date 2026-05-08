@@ -18,6 +18,7 @@ struct Vertex {
     Math::Vec3f position;
     Math::Vec2f tex_coord;
     Math::Vec3f normal;
+    Math::Vec4f tangent;
 };
 
 using Index = u32;

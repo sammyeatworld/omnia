@@ -125,6 +125,7 @@ auto ModelImporter::import_gltf(std::filesystem::path const& path, AssetRegistry
             cgltf_accessor const* position_accessor = nullptr;
             cgltf_accessor const* normal_accessor = nullptr;
             cgltf_accessor const* tex_coord_accessor = nullptr;
+            cgltf_accessor const* tangent_accessor = nullptr;
 
             for (cgltf_size k = 0; k < primitive.attributes_count; ++k) {
                 auto const& attribute = primitive.attributes[k];
@@ -137,6 +138,9 @@ auto ModelImporter::import_gltf(std::filesystem::path const& path, AssetRegistry
                     break;
                 case cgltf_attribute_type_texcoord:
                     tex_coord_accessor = attribute.data;
+                    break;
+                case cgltf_attribute_type_tangent:
+                    tangent_accessor = attribute.data;
                     break;
                 case cgltf_attribute_type_joints:
                     break;
@@ -154,19 +158,23 @@ auto ModelImporter::import_gltf(std::filesystem::path const& path, AssetRegistry
             auto vertex_count = position_accessor->count;
             sub_mesh.vertices.reserve(vertex_count);
 
-            for (cgltf_size v = 0; v < vertex_count; ++v) {
+            for (cgltf_size vertex_index = 0; vertex_index < vertex_count; ++vertex_index) {
                 Graphics::Vertex vertex {};
 
-                if (position_accessor) {
-                    cgltf_accessor_read_float(position_accessor, v, &vertex.position.x, 3);
+                if (position_accessor != nullptr) {
+                    cgltf_accessor_read_float(position_accessor, vertex_index, &vertex.position.x, 3);
                 }
 
-                if (normal_accessor) {
-                    cgltf_accessor_read_float(normal_accessor, v, &vertex.normal.x, 3);
+                if (normal_accessor != nullptr) {
+                    cgltf_accessor_read_float(normal_accessor, vertex_index, &vertex.normal.x, 3);
                 }
 
-                if (tex_coord_accessor) {
-                    cgltf_accessor_read_float(tex_coord_accessor, v, &vertex.tex_coord.x, 2);
+                if (tex_coord_accessor != nullptr) {
+                    cgltf_accessor_read_float(tex_coord_accessor, vertex_index, &vertex.tex_coord.x, 2);
+                }
+
+                if (tangent_accessor != nullptr) {
+                    cgltf_accessor_read_float(tangent_accessor, vertex_index, &vertex.tangent.x, 4);
                 }
 
                 sub_mesh.vertices.push_back(vertex);
@@ -185,6 +193,57 @@ auto ModelImporter::import_gltf(std::filesystem::path const& path, AssetRegistry
                 sub_mesh.indices.reserve(vertex_count);
                 for (u32 idx = 0; idx < vertex_count; ++idx) {
                     sub_mesh.indices.push_back(idx);
+                }
+            }
+
+            if (tangent_accessor == nullptr) {
+                std::vector<Math::Vec3f> tangents(vertex_count);
+                std::vector<Math::Vec3f> bitangents(vertex_count);
+
+                for (std::size_t index = 0; index + 2 < sub_mesh.indices.size(); index += 3) {
+                    auto const i0 = sub_mesh.indices[index + 0];
+                    auto const i1 = sub_mesh.indices[index + 1];
+                    auto const i2 = sub_mesh.indices[index + 2];
+
+                    auto const& v0 = sub_mesh.vertices[i0];
+                    auto const& v1 = sub_mesh.vertices[i1];
+                    auto const& v2 = sub_mesh.vertices[i2];
+
+                    auto const edge1 = v1.position - v0.position;
+                    auto const edge2 = v2.position - v0.position;
+
+                    auto const delta_uv1 = v1.tex_coord - v0.tex_coord;
+                    auto const delta_uv2 = v2.tex_coord - v0.tex_coord;
+
+                    auto denominator = (delta_uv1.x * delta_uv2.y) - (delta_uv2.x * delta_uv1.y);
+                    if (std::abs(denominator) < 1e-6F) {
+                        continue;
+                    }
+
+                    auto const tangent = ((edge1 * delta_uv2.y) - (edge2 * delta_uv1.y)) / denominator;
+                    auto const bitangent = ((edge2 * delta_uv1.x) - (edge1 * delta_uv2.x)) / denominator;
+
+                    tangents[i0] += tangent;
+                    tangents[i1] += tangent;
+                    tangents[i2] += tangent;
+
+                    bitangents[i0] += bitangent;
+                    bitangents[i1] += bitangent;
+                    bitangents[i2] += bitangent;
+                }
+
+                for (std::size_t vertex_index = 0; vertex_index < vertex_count; ++vertex_index) {
+                    auto& vertex = sub_mesh.vertices[vertex_index];
+                    auto& normal = vertex.normal;
+                    auto& tangent = tangents[vertex_index];
+                    auto& bitangent = bitangents[vertex_index];
+
+                    auto t = tangent - normal * Math::dot(normal, tangent);
+                    t.normalize();
+
+                    auto handedness = (Math::dot(Math::cross(normal, tangent), bitangent) < 0.0F) ? -1.0F : 1.0F;
+
+                    vertex.tangent = Math::Vec4f(t.x, t.y, t.z, handedness);
                 }
             }
         }

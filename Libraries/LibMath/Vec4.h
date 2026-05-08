@@ -9,6 +9,7 @@
 #include <cmath>
 
 #include <Common/Types.h>
+#include <LibMath/Vec3.h>
 
 namespace Math {
 
@@ -28,6 +29,11 @@ public:
         , z(z)
         , w(w)
     {
+    }
+
+    constexpr auto xyz() const -> Vec3<T>
+    {
+        return Vec3<T> { x, y, z };
     }
 
     constexpr auto operator+(Vec4<T> const& other) const -> Vec4
