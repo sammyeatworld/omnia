@@ -42,6 +42,7 @@ private:
 
 auto to_vk(LoadOp load_op) -> VkAttachmentLoadOp;
 auto to_vk(StoreOp store_op) -> VkAttachmentStoreOp;
+auto to_vk(ImageLayout layout) -> VkImageLayout;
 auto to_vk(RenderPass const* render_pass) -> RHI::VkRenderPass const*;
 
 }

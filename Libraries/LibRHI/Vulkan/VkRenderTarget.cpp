@@ -25,6 +25,9 @@ auto VkRenderTarget::create(Configuration const& config, RHI::VkDevice const* de
     std::vector<VkImageView> attachments;
 
     for (auto const* texture : config.textures) {
+        assert(texture->width() == render_target->m_width);
+        assert(texture->height() == render_target->m_height);
+
         auto* vk_texture = to_vk(texture);
         attachments.push_back(vk_texture->image_view());
     }

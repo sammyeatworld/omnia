@@ -19,14 +19,22 @@
 namespace RHI {
 
 enum class LoadOp : u8 {
-    Load = 0,
-    Clear,
+    Clear = 0,
+    Load,
     DontCare
 };
 
 enum class StoreOp : u8 {
     Store = 0,
     DontCare
+};
+
+enum class ImageLayout : u8 {
+    Undefined = 0,
+    ColorAttachment,
+    DepthReadOnly,
+    ShaderReadOnly,
+    PresentSrc
 };
 
 class RenderPass {
@@ -38,7 +46,9 @@ public:
         TextureFormat format {};
         LoadOp load_op {};
         StoreOp store_op {};
-        Math::Vec4f clear_color;
+        Math::Vec4f clear_color {};
+        ImageLayout initial_layout;
+        ImageLayout final_layout;
     };
 
     struct Configuration {

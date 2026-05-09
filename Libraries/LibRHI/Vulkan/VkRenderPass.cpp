@@ -81,8 +81,8 @@ auto VkRenderPass::create_render_pass() -> std::expected<void, std::string>
             .storeOp = to_vk(color_attachment.store_op),
             .stencilLoadOp = VK_ATTACHMENT_LOAD_OP_DONT_CARE,
             .stencilStoreOp = VK_ATTACHMENT_STORE_OP_DONT_CARE,
-            .initialLayout = VK_IMAGE_LAYOUT_UNDEFINED,
-            .finalLayout = VK_IMAGE_LAYOUT_PRESENT_SRC_KHR
+            .initialLayout = to_vk(color_attachment.initial_layout),
+            .finalLayout = to_vk(color_attachment.final_layout)
         };
         color_attachment_references.emplace_back(attachment_descriptions.size(), VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL);
         attachment_descriptions.push_back(color_attachment_description);
@@ -196,6 +196,23 @@ auto to_vk(StoreOp store_op) -> VkAttachmentStoreOp
         return VK_ATTACHMENT_STORE_OP_DONT_CARE;
     }
     return VK_ATTACHMENT_STORE_OP_DONT_CARE;
+}
+
+auto to_vk(ImageLayout layout) -> VkImageLayout
+{
+    switch (layout) {
+    case ImageLayout::Undefined:
+        return VK_IMAGE_LAYOUT_UNDEFINED;
+    case ImageLayout::ShaderReadOnly:
+        return VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
+    case ImageLayout::ColorAttachment:
+        return VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
+    case ImageLayout::DepthReadOnly:
+        return VK_IMAGE_LAYOUT_DEPTH_READ_ONLY_OPTIMAL;
+    case ImageLayout::PresentSrc:
+        return VK_IMAGE_LAYOUT_PRESENT_SRC_KHR;
+    }
+    return VK_IMAGE_LAYOUT_UNDEFINED;
 }
 
 auto to_vk(RenderPass const* render_pass) -> RHI::VkRenderPass const*
