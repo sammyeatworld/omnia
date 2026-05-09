@@ -78,6 +78,10 @@ public:
         std::vector<VertexAttribute> attributes;
     };
 
+    struct ColorBlendAttachment {
+        bool blend_enable = false;
+    };
+
     struct PushConstant {
         u32 size;
         u32 offset;
@@ -91,6 +95,7 @@ public:
         Depth depth {};
         RenderPass const* render_pass {};
         VertexBinding vertex_binding {};
+        std::vector<ColorBlendAttachment> color_blend_attachments;
         std::vector<ResourceLayout const*> resource_layouts;
         std::vector<PushConstant> push_constants {};
     };

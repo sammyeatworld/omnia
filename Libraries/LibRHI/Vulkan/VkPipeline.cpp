@@ -116,16 +116,19 @@ auto VkPipeline::create(Configuration const& config, RHI::VkDevice const* device
         .alphaToOneEnable = VK_FALSE,
     };
 
-    VkPipelineColorBlendAttachmentState const color_blend_attachment_state {
-        .blendEnable = VK_FALSE,
-        .srcColorBlendFactor = VK_BLEND_FACTOR_ONE,
-        .dstColorBlendFactor = VK_BLEND_FACTOR_ZERO,
-        .colorBlendOp = VK_BLEND_OP_ADD,
-        .srcAlphaBlendFactor = VK_BLEND_FACTOR_ONE,
-        .dstAlphaBlendFactor = VK_BLEND_FACTOR_ZERO,
-        .alphaBlendOp = VK_BLEND_OP_ADD,
-        .colorWriteMask = VK_COLOR_COMPONENT_R_BIT | VK_COLOR_COMPONENT_G_BIT | VK_COLOR_COMPONENT_B_BIT | VK_COLOR_COMPONENT_A_BIT,
-    };
+    std::vector<VkPipelineColorBlendAttachmentState> color_blend_attachment_states;
+    for (auto const& color_blend_attachment : config.color_blend_attachments) {
+        color_blend_attachment_states.push_back({
+            .blendEnable = color_blend_attachment.blend_enable,
+            .srcColorBlendFactor = VK_BLEND_FACTOR_SRC_ALPHA,
+            .dstColorBlendFactor = VK_BLEND_FACTOR_ONE_MINUS_SRC_ALPHA,
+            .colorBlendOp = VK_BLEND_OP_ADD,
+            .srcAlphaBlendFactor = VK_BLEND_FACTOR_ONE,
+            .dstAlphaBlendFactor = VK_BLEND_FACTOR_ZERO,
+            .alphaBlendOp = VK_BLEND_OP_ADD,
+            .colorWriteMask = VK_COLOR_COMPONENT_R_BIT | VK_COLOR_COMPONENT_G_BIT | VK_COLOR_COMPONENT_B_BIT | VK_COLOR_COMPONENT_A_BIT,
+        });
+    }
 
     VkPipelineColorBlendStateCreateInfo const color_blend_state_create_info {
         .sType = VK_STRUCTURE_TYPE_PIPELINE_COLOR_BLEND_STATE_CREATE_INFO,
@@ -133,8 +136,8 @@ auto VkPipeline::create(Configuration const& config, RHI::VkDevice const* device
         .flags = 0,
         .logicOpEnable = VK_FALSE,
         .logicOp = VK_LOGIC_OP_COPY,
-        .attachmentCount = 1,
-        .pAttachments = &color_blend_attachment_state,
+        .attachmentCount = static_cast<u32>(color_blend_attachment_states.size()),
+        .pAttachments = color_blend_attachment_states.data(),
         .blendConstants = { 0.0F, 0.0F, 0.0F, 0.0F },
     };
 
