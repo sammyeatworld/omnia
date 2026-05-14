@@ -14,6 +14,7 @@
 *.out
 *.app
 .idea/
+Build/
 cmake-build-*/
 CMakeLists.txt.user
 CMakeCache.txt
