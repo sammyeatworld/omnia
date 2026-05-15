@@ -1,5 +1,6 @@
 set(SOURCES
-        Temp.cpp
+        Scheduler.cpp
+        ThreadPool.cpp
 )
 
 omnia_lib(LibConcurrency
