@@ -4,17 +4,9 @@
  * SPDX-License-Identifier: BSD-2-Clause
  */
 
-#include <LibRenderer/DeferredRenderer.h>
+#include <Common/Expected.h>
 
-#define TRY_ASSIGN(lhs, expr)                                  \
-    {                                                          \
-        auto result = (expr);                                  \
-        if (!result.has_value()) {                             \
-            return std::unexpected(std::move(result).error()); \
-        }                                                      \
-        lhs = std::move(result).value();                       \
-    }                                                          \
-    (void)0
+#include <LibRenderer/DeferredRenderer.h>
 
 namespace Renderer {
 

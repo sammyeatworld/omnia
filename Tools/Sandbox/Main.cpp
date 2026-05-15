@@ -4,9 +4,10 @@
  * SPDX-License-Identifier: BSD-2-Clause
  */
 
-#include <ranges>
 #include <print>
+#include <ranges>
 
+#include <Common/Expected.h>
 #include <Common/Types.h>
 #include <LibAsset/AssetManager.h>
 #include <LibMath/Math.h>
@@ -14,22 +15,11 @@
 #include <LibPlatform/Window.h>
 #include <LibRHI/Device.h>
 #include <LibRenderer/Camera.h>
+#include <LibRenderer/DeferredRenderer.h>
 #include <LibRenderer/Light.h>
 #include <LibRenderer/Model.h>
 #include <LibRenderer/ResourceManager.h>
-#include <LibRenderer/DeferredRenderer.h>
 
-#define TRY_ASSIGN(lhs, expr)                                  \
-    {                                                          \
-        auto result = (expr);                                  \
-        if (!result.has_value()) {                             \
-            return std::unexpected(std::move(result).error()); \
-        }                                                      \
-        lhs = std::move(result).value();                       \
-    }                                                          \
-    (void)0
-
-// TODO: Cleanup all into LibRenderer
 class Sandbox final {
 public:
     static auto create() -> std::expected<std::unique_ptr<Sandbox>, std::string>
