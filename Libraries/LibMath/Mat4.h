@@ -60,6 +60,11 @@ public:
         return result;
     }
 
+    constexpr auto elements() const -> std::array<T, 16> const&
+    {
+        return m_elements;
+    }
+
     static constexpr auto translation(T x, T y, T z) -> Mat4<T>
     {
         Mat4<T> result = identity();
@@ -121,6 +126,42 @@ public:
         result[11] = -1;
         result[14] = -(far_plane * near_plane) / (far_plane - near_plane);
         result[15] = 0;
+        return result;
+    }
+
+    static constexpr auto orthographic(T left, T right, T bottom, T top, T near_plane, T far_plane) -> Mat4<T>
+    {
+        Mat4<T> result {};
+        result[0] = 2 / (right - left);
+        result[5] = -2 / (top - bottom);
+        result[10] = -1 / (far_plane - near_plane);
+        result[12] = -(right + left) / (right - left);
+        result[13] = -(top + bottom) / (top - bottom);
+        result[14] = -near_plane / (far_plane - near_plane);
+        result[15] = 1;
+        return result;
+    }
+
+    static constexpr auto look_at(Vec3<T> const& eye, Vec3<T> const& center, Vec3<T> const& up) -> Mat4<T>
+    {
+        auto const f = (center - eye).normalized();
+        auto const r = cross(f, up).normalized();
+        auto const u = cross(r, f);
+
+        Mat4<T> result {};
+        result[0] = r.x;
+        result[4] = r.y;
+        result[8] = r.z;
+        result[1] = u.x;
+        result[5] = u.y;
+        result[9] = u.z;
+        result[2] = -f.x;
+        result[6] = -f.y;
+        result[10] = -f.z;
+        result[12] = -dot(r, eye);
+        result[13] = -dot(u, eye);
+        result[14] = dot(f, eye);
+        result[15] = 1;
         return result;
     }
 

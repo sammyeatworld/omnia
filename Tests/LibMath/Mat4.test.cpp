@@ -60,26 +60,65 @@ TEST(Mat4, PerspectiveSymmetry)
 
 TEST(Mat4, PerspectiveFovScaling)
 {
-    float aspect = 1.0F;
-    float near = 0.1F;
-    float far = 100.0F;
+    auto const aspect = 1.0F;
+    auto const near = 0.1F;
+    auto const far = 100.0F;
 
-    auto m1 = Math::Mat4f::perspective(DEG_TO_RAD(45.0F), aspect, near, far);
-    auto m2 = Math::Mat4f::perspective(DEG_TO_RAD(90.0F), aspect, near, far);
+    auto const m1 = Math::Mat4f::perspective(DEG_TO_RAD(45.0F), aspect, near, far);
+    auto const m2 = Math::Mat4f::perspective(DEG_TO_RAD(90.0F), aspect, near, far);
 
     EXPECT_GT(m1[0], m2[0]);
 }
 
 TEST(Mat4, PerspectiveDepthMapping)
 {
-    float aspect = 1.0F;
-    float near = 0.1F;
-    float far = 100.0F;
+    auto const aspect = 1.0F;
+    auto const near = 0.1F;
+    auto const far = 100.0F;
 
-    auto projection = Math::Mat4f::perspective(DEG_TO_RAD(60.0F), aspect, near, far);
+    auto const projection = Math::Mat4f::perspective(DEG_TO_RAD(60.0F), aspect, near, far);
 
     EXPECT_LT(projection[10], 0.0F);
     EXPECT_LT(projection[10], 0.0F);
+}
+
+TEST(Mat4, OrthographicDepthMapping)
+{
+    auto const near_plane = 0.1F;
+    auto const far_plane = 100.0F;
+    auto const actual = Math::Mat4f::orthographic(-10.0F, 10.0F, -10.0F, 10.0F, near_plane, far_plane);
+
+    auto transform_z = [&](float z) {
+        return actual[10] * z + actual[14];
+    };
+
+    auto const eps = far_plane * 1e-4F;
+    EXPECT_NEAR(transform_z(near_plane), 0.0F, eps);
+    EXPECT_NEAR(transform_z(far_plane), -1.0F, eps);
+}
+
+TEST(Mat4, LookAtNegativeZ)
+{
+    auto const actual = Math::Mat4f::look_at({ 0.0F, 0.0F, 5.0F }, { 0.0F, 0.0F, 0.0F }, { 0.0F, 1.0F, 0.0F });
+    auto const expected = Math::Mat4f({
+        1.0F, 0.0F,  0.0F, 0.0F,
+        0.0F, 1.0F,  0.0F, 0.0F,
+        0.0F, 0.0F,  1.0F, 0.0F,
+        0.0F, 0.0F, -5.0F, 1.0F
+    });
+    EXPECT_EQ(actual.elements(), expected.elements());
+}
+
+TEST(Mat4, LookAtNegativeX)
+{
+    auto const actual = Math::Mat4f::look_at({ 3.0F, 0.0F, 0.0F }, { 0.0F, 0.0F, 0.0F }, { 0.0F, 1.0F, 0.0F });
+    auto const expected = Math::Mat4f({
+         0.0F, 0.0F,  1.0F, 0.0F,
+         0.0F, 1.0F,  0.0F, 0.0F,
+        -1.0F, 0.0F,  0.0F, 0.0F,
+         0.0F, 0.0F, -3.0F, 1.0F
+    });
+    EXPECT_EQ(actual.elements(), expected.elements());
 }
 
 TEST(Mat4, FromQuaternionIdentity)
