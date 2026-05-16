@@ -4,6 +4,7 @@
  * SPDX-License-Identifier: BSD-2-Clause
  */
 
+#include <array>
 #include <cassert>
 #include <format>
 
@@ -21,8 +22,7 @@ auto VkPipeline::create(Configuration const& config, RHI::VkDevice const* device
 
     auto* vk_render_pass = to_vk(config.render_pass)->handle();
     auto* vk_vertex_shader = to_vk(config.vertex_shader)->handle();
-    auto* vk_fragment_shader = to_vk(config.fragment_shader)->handle();
-    std::vector<VkPipelineShaderStageCreateInfo> const shader_stages {
+    std::vector<VkPipelineShaderStageCreateInfo> shader_stages {
         {
             .sType = VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO,
             .pNext = nullptr,
@@ -31,8 +31,11 @@ auto VkPipeline::create(Configuration const& config, RHI::VkDevice const* device
             .module = vk_vertex_shader,
             .pName = "main",
             .pSpecializationInfo = nullptr,
-        },
-        {
+        }
+    };
+    if (config.fragment_shader != nullptr) {
+        auto* vk_fragment_shader = to_vk(config.fragment_shader)->handle();
+        shader_stages.push_back({
             .sType = VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO,
             .pNext = nullptr,
             .flags = 0,
@@ -40,8 +43,8 @@ auto VkPipeline::create(Configuration const& config, RHI::VkDevice const* device
             .module = vk_fragment_shader,
             .pName = "main",
             .pSpecializationInfo = nullptr,
-        }
-    };
+        });
+    }
 
     std::vector<VkVertexInputBindingDescription> vertex_input_binding_descriptions;
     if (config.vertex_binding.has_value()) {
@@ -178,7 +181,7 @@ auto VkPipeline::create(Configuration const& config, RHI::VkDevice const* device
         return std::unexpected(std::format("Failed to create vulkan pipeline layout: {}", string_VkResult(result)));
     }
 
-    VkDynamicState const dynamic_states[] = {
+    std::array<VkDynamicState, 2> const dynamic_states = {
         VK_DYNAMIC_STATE_VIEWPORT,
         VK_DYNAMIC_STATE_SCISSOR,
     };
@@ -187,8 +190,8 @@ auto VkPipeline::create(Configuration const& config, RHI::VkDevice const* device
         .sType = VK_STRUCTURE_TYPE_PIPELINE_DYNAMIC_STATE_CREATE_INFO,
         .pNext = nullptr,
         .flags = 0,
-        .dynamicStateCount = static_cast<u32>(std::size(dynamic_states)),
-        .pDynamicStates = dynamic_states,
+        .dynamicStateCount = static_cast<u32>(dynamic_states.size()),
+        .pDynamicStates = dynamic_states.data(),
     };
 
     VkPipelineDepthStencilStateCreateInfo const depth_stencil_state_create_info {
@@ -241,7 +244,6 @@ VkPipeline::VkPipeline(Configuration const& config, RHI::VkDevice const* device)
 {
     assert(m_device != nullptr);
     assert(config.vertex_shader != nullptr);
-    assert(config.fragment_shader != nullptr);
     assert(config.render_pass != nullptr);
 }
 

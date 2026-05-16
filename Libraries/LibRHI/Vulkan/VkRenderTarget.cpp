@@ -54,11 +54,10 @@ auto VkRenderTarget::create(Configuration const& config, RHI::VkDevice const* de
 
 VkRenderTarget::VkRenderTarget(Configuration const& config, RHI::VkDevice const* device)
     : m_device(device)
+    , m_width(config.width)
+    , m_height(config.height)
 {
     assert(m_device != nullptr);
-    assert(!config.textures.empty());
-    m_width = config.textures[0]->width();
-    m_height = config.textures[0]->height();
 }
 
 VkRenderTarget::~VkRenderTarget()

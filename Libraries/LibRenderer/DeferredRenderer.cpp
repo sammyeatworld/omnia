@@ -119,7 +119,9 @@ auto DeferredRenderer::create_gbuffer_textures(u32 width, u32 height) -> std::ex
             gbuffer.material.get(),
             gbuffer.emissive.get()
         },
-        .depth_texture = gbuffer.depth.get()
+        .depth_texture = gbuffer.depth.get(),
+        .width = width,
+        .height = height
     };
     TRY_ASSIGN(gbuffer.render_target, m_device->create_render_target(geometry_render_target_config));
 
@@ -312,7 +314,9 @@ auto DeferredRenderer::create_output_render_target(RHI::Texture const* output_te
     RHI::RenderTarget::Configuration const render_target_config {
         .render_pass = m_lighting_render_pass.get(),
         .textures = { output_texture },
-        .depth_texture = nullptr
+        .depth_texture = nullptr,
+        .width = output_texture->width(),
+        .height = output_texture->height()
     };
     return m_device->create_render_target(render_target_config);
 }

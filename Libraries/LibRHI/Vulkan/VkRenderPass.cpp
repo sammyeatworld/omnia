@@ -16,8 +16,6 @@ namespace RHI {
 auto VkRenderPass::create(const RHI::RenderPass::Configuration& config, RHI::VkDevice const* device) -> std::expected<std::unique_ptr<RHI::VkRenderPass>, std::string>
 {
     std::unique_ptr<VkRenderPass> render_pass(new VkRenderPass(config, device));
-    render_pass->m_device = device;
-    render_pass->m_config = config;
 
     auto result = render_pass->create_render_pass();
     if (!result.has_value()) {

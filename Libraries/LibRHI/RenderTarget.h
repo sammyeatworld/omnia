@@ -21,6 +21,8 @@ public:
         RenderPass const* render_pass;
         std::vector<Texture const*> textures;
         Texture const* depth_texture {};
+        u32 width;
+        u32 height;
     };
 
     virtual ~RenderTarget() = default;
