@@ -39,6 +39,20 @@ public:
         return m_elements.data();
     }
 
+    constexpr auto at(std::size_t row, std::size_t col) -> T&
+    {
+        assert(row >= 0 && row < 4);
+        assert(col >= 0 && col < 4);
+        return m_elements[row + col * 4];
+    }
+
+    constexpr auto at(std::size_t row, std::size_t col) const -> T const&
+    {
+        assert(row >= 0 && row < 4);
+        assert(col >= 0 && col < 4);
+        return m_elements[row + col * 4];
+    }
+
     constexpr auto operator[](size_t index) -> T&
     {
         assert(index >= 0 && index < m_elements.size());
@@ -49,6 +63,19 @@ public:
     {
         assert(index >= 0 && index < m_elements.size());
         return m_elements[index];
+    }
+
+    constexpr auto operator*(Mat4<T> const& other) const -> Mat4<T>
+    {
+        Mat4<T> result {};
+        for (size_t row = 0; row < 4; ++row) {
+            for (size_t col = 0; col < 4; ++col) {
+                for (size_t i = 0; i < 4; ++i) {
+                    result.at(row, col) += at(row, i) * other.at(i, col);
+                }
+            }
+        }
+        return result;
     }
 
     constexpr auto translate(Vec3<T> const& translation) const -> Mat4<T>
