@@ -32,7 +32,7 @@ auto VkSampler::create(Configuration const& config, RHI::VkDevice const* device)
         .compareOp = VK_COMPARE_OP_ALWAYS,
         .minLod = 0.0F,
         .maxLod = 0.0F,
-        .borderColor = VK_BORDER_COLOR_INT_OPAQUE_BLACK,
+        .borderColor = to_vk(config.border_color),
         .unnormalizedCoordinates = VK_FALSE
     };
 
@@ -87,6 +87,18 @@ auto to_vk(AddressMode address_mode) -> VkSamplerAddressMode
         return VK_SAMPLER_ADDRESS_MODE_CLAMP_TO_EDGE;
     case AddressMode::ClampToBorder:
         return VK_SAMPLER_ADDRESS_MODE_CLAMP_TO_BORDER;
+    }
+}
+
+auto to_vk(BorderColor border_color) -> VkBorderColor
+{
+    switch (border_color) {
+    case BorderColor::TransparentBlack:
+        return VK_BORDER_COLOR_FLOAT_TRANSPARENT_BLACK;
+    case BorderColor::OpaqueBlack:
+        return VK_BORDER_COLOR_FLOAT_OPAQUE_BLACK;
+    case BorderColor::OpaqueWhite:
+        return VK_BORDER_COLOR_FLOAT_OPAQUE_WHITE;
     }
 }
 

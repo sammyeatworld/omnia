@@ -24,6 +24,12 @@ enum class AddressMode : u8 {
     ClampToBorder
 };
 
+enum class BorderColor : u8 {
+    TransparentBlack = 0,
+    OpaqueBlack,
+    OpaqueWhite
+};
+
 class Sampler {
     OA_MAKE_NONCOPYABLE(Sampler);
     OA_MAKE_NONMOVABLE(Sampler);
@@ -37,6 +43,7 @@ public:
             AddressMode v;
             AddressMode w;
         } address_mode;
+        BorderColor border_color = BorderColor::TransparentBlack;
     };
 
     virtual ~Sampler() = default;

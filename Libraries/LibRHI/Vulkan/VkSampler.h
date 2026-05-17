@@ -32,5 +32,6 @@ private:
 auto to_vk(Sampler const* sampler) -> RHI::VkSampler const*;
 auto to_vk(Filter filter) -> VkFilter;
 auto to_vk(AddressMode address_mode) -> VkSamplerAddressMode;
+auto to_vk(BorderColor border_color) -> VkBorderColor;
 
 }
