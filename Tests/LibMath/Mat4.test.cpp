@@ -137,9 +137,9 @@ TEST(Mat4, LookAtNegativeX)
 {
     auto const actual = Math::Mat4f::look_at({ 3.0F, 0.0F, 0.0F }, { 0.0F, 0.0F, 0.0F }, { 0.0F, 1.0F, 0.0F });
     auto const expected = Math::Mat4f({
-         0.0F, 0.0F,  1.0F, 0.0F,
+         0.0F, 0.0F, -1.0F, 0.0F,
          0.0F, 1.0F,  0.0F, 0.0F,
-        -1.0F, 0.0F,  0.0F, 0.0F,
+         1.0F, 0.0F,  0.0F, 0.0F,
          0.0F, 0.0F, -3.0F, 1.0F
     });
     EXPECT_EQ(actual.elements(), expected.elements());

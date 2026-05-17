@@ -177,13 +177,13 @@ public:
 
         Mat4<T> result {};
         result[0] = r.x;
-        result[4] = r.y;
-        result[8] = r.z;
-        result[1] = u.x;
+        result[1] = r.y;
+        result[2] = r.z;
+        result[4] = u.x;
         result[5] = u.y;
-        result[9] = u.z;
-        result[2] = -f.x;
-        result[6] = -f.y;
+        result[6] = u.z;
+        result[8] = -f.x;
+        result[9] = -f.y;
         result[10] = -f.z;
         result[12] = -dot(r, eye);
         result[13] = -dot(u, eye);
